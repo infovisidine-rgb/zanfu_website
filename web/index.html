@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="VisiDine — see your food on the table before you order.">
+  <meta name="google-signin-client_id" content="826969945589-kqdfopmvug8iah0mq8u8iqfe9hdu1rlp.apps.googleusercontent.com">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="VisiDine">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>VisiDine</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      overscroll-behavior-y: none !important;
+      overscroll-behavior-x: none !important;
+      overscroll-behavior: none !important;
+      margin: 0;
+      padding: 0;
+      background-color: #111111;
+    }
+  </style>
+
+  <script type="module" src="./assets/packages/model_viewer_plus/assets/model-viewer.min.js" defer></script>
+</head>
+<body>
+  <div id="vd-boot" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#111;color:#fff;font-family:sans-serif;font-size:16px;">
+    Loading VisiDine…
+  </div>
+  <script>
+    function removeBootScreen() {
+      var el = document.getElementById('vd-boot');
+      if (el) el.remove();
+    }
+    window.addEventListener('flutter-first-frame', removeBootScreen);
+    // Fallback: hide loading screen after 4s max in case event is missed
+    setTimeout(removeBootScreen, 4000);
+
+    // Old release builds left a broken service worker that 404s
+    // AssetManifest.bin.json and hides every icon/logo.
+    function clearBrokenWorkers() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        }).catch(function () {});
+      }
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) { caches.delete(k); });
+        }).catch(function () {});
+      }
+    }
+
+    clearBrokenWorkers();
+
+    var s = document.createElement('script');
+    s.src = 'flutter_bootstrap.js';
+    s.async = true;
+    document.body.appendChild(s);
+
+    window.vdGeocoderPromise = null;
+    window.vdMapsApiKey = '';
+    window.vdInitMapsGeocoder = function (apiKey) {
+      if (apiKey) window.vdMapsApiKey = apiKey;
+      if (window.vdGeocoderPromise) return window.vdGeocoderPromise;
+      window.vdGeocoderPromise = new Promise(function (resolve, reject) {
+        if (window.google && google.maps && google.maps.Geocoder) {
+          resolve(true);
+          return;
+        }
+        if (!window.vdMapsApiKey) {
+          reject(new Error('Missing Google Maps API key'));
+          return;
+        }
+        var script = document.createElement('script');
+        script.src =
+          'https://maps.googleapis.com/maps/api/js?key=' +
+          encodeURIComponent(window.vdMapsApiKey) +
+          '&loading=async';
+        script.async = true;
+        script.onload = function () { resolve(true); };
+        script.onerror = function () {
+          reject(new Error('Google Maps script failed to load'));
+        };
+        document.head.appendChild(script);
+      });
+      return window.vdGeocoderPromise;
+    };
+
+    window.vdReverseGeocode = function (lat, lng) {
+      return window.vdInitMapsGeocoder(window.vdMapsApiKey).then(function () {
+        return new Promise(function (resolve, reject) {
+          var geocoder = new google.maps.Geocoder();
+          geocoder.geocode(
+            { location: { lat: lat, lng: lng } },
+            function (results, status) {
+              if (status !== 'OK' || !results || !results.length) {
+                reject(status || 'NO_RESULTS');
+                return;
+              }
+              var priority = {
+                street_address: 100,
+                premise: 90,
+                subpremise: 85,
+                establishment: 80,
+                route: 70,
+                neighborhood: 45,
+                sublocality: 40,
+                locality: 20
+              };
+              var best = results[0];
+              var bestScore = -1;
+              for (var i = 0; i < results.length; i++) {
+                var item = results[i];
+                var score = 0;
+                var types = item.types || [];
+                for (var j = 0; j < types.length; j++) {
+                  var p = priority[types[j]] || 0;
+                  if (p > score) score = p;
+                }
+                if (score > bestScore) {
+                  bestScore = score;
+                  best = item;
+                }
+              }
+              resolve(best.formatted_address || '');
+            }
+          );
+        });
+      });
+    };
+  </script>
+</body>
+</html>

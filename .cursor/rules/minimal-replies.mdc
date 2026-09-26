@@ -1,0 +1,10 @@
+---
+description: Keep replies minimal — only do asked work, no extra chat
+alwaysApply: true
+---
+
+# Minimal responses
+
+- Do only what the user asked. No extra features, refactors, or scope creep.
+- Keep chat replies very short: confirm done / list what changed. No long explanations, tutorials, or follow-up suggestions unless asked.
+- Do not start extra conversation in chat.

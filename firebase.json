@@ -1,0 +1,14 @@
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "visidine-c7d2d",
+          "configurations": {
+            "web": "1:826969945589:web:7296832e04b5f5fae11cbc"
+          }
+        }
+      }
+    }
+  }
+}

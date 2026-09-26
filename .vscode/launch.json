@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "VisiDine (Chrome)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "args": [
+                "--web-port=8080"
+            ]
+        },
+        {
+            "name": "VisiDine (Web / phone)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "web-server",
+            "args": [
+                "--web-hostname=0.0.0.0",
+                "--web-port=8080",
+                "--release",
+                "--no-web-resources-cdn"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,578 @@
+﻿Showing Infinix X663 logs:
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (zy.b@ddd367f) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (io.flutter.plugins.imagepicker.n@bdd695) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (io.flutter.plugins.pathprovider.i@473f3aa) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (com.baseflow.permissionhandler.o@918bb9b) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin@9f5a076) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (com.tekartik.sqflite.g0@5bd7677) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (io.flutter.plugins.urllauncher.i@2cde2e4) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (ye0.d@d23434d) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (dc.b@1134e02) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (ey.d@dedc749) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (ac.b@c6c484e) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (com.transsion.flutter_vap.b@276bd6f) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (ay.c@d20aa7c) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (com.transsion.trans_flutter_effect_light_plugin.TransFlutterEffectLightPlugin@2c28f05) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (io.flutter.plugins.camerax.o@7489b5a) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (com.lib.flutter_blue_plus.FlutterBluePlusPlugin@adbc18b) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (wx.g@7651326) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (ux.a@742eb67) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (com.example.fl_a_analytics.FlAAnalyticsPlugin@3e1cd14) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (xx.b@51899bd) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+W/FlutterEngineCxnRegstry(15021): Attempted to register plugin (mea.hetian.flutter_qr_reader.FlutterQrReaderPlugin@f7f3bb2) but it was already registered with this FlutterEngine (io.flutter.embedding.engine.a@305164c).
+D/FlutterGeolocator(15021): Creating service.
+D/FlutterGeolocator(15021): Binding to location service.
+D/FlutterGeolocator(15021): Flutter engine connected. Connected engine count 1
+I/flutter (15021): initLogConfig 
+I/flutter (15021): IsolateHelper startIsolate begin
+I/flutter (15021): UploadAthenaData#addConnectListener()
+I/flutter (15021): IsolateHelper,isolateWorker begin 
+I/flutter (15021): IsolateHelper,ensureInitialized 
+I/flutter (15021): _MyApp initState
+I/flutter (15021): MyApp main build
+I/flutter (15021): language locale 1:en_US
+I/flutter (15021): language locale 2:en_US
+I/flutter (15021): supportLocales:[en, am_ET, ar, ar_MA, as_IN, az, bg_BG, bn_BD, bs, bs_BA, ckb_IQ, cs_CZ, da_DK, de_DE, efi, el_GR, es, es_US, et_EE, fa_IR, fi_FI, fil_PH, fr, gu_IN, guz_KE, ha_NG, he_IL, hi_IN, hr_HR, hu_HU, ibb, id_ID, ig_NG, is_IS, it_IT, kam_KE, ki_KE, kk_KZ, km_KH, kn_IN, ks, lb_LU, lo_LA, lt_LT, luo_KE, lv_LV, mer_KE, mk_MK, ml, mn, mr_IN, ms_MY, my_MM, my_Qaag_ZG, my_ZG, nb_NO, ne_NP, nl_NL, om_ET, or_IN, pa, pcm_NG, pl_PL, pt_BR, pt_PT, ro_MD, ro_RO, ru, si_LK, sk_SK, sl_SI, so, sq_AL, sr_ME, sr_RS, sv_SE, sw_TZ, ta_IN, te_IN, tg, th_TH, ti_ET, tk, tr_TR, uk_UA, ur_PK, uz, vi_VN, yo_NG, zh, zh_Hant_TW]
+I/flutter (15021): isSupportLanguage:true
+I/flutter (15021): isSupportDateFormat:true
+I/flutter (15021): MyRouteObserver Pushed a new route: /
+I/flutter (15021): MyRouteObserver now: [/]
+I/flutter (15021): didPush:  Instance of 'MaterialPageRoute<dynamic>', null
+I/flutter (15021): didPush: name=/, cid=null, current=null, args=null
+I/flutter (15021): reportEvent: flutter_open, /, null
+I/flutter (15021): AndroidMainPage build true
+I/flutter (15021): Instance of 'AndroidMainPageController' is onInit
+I/flutter (15021): locale:en_US
+I/flutter (15021): locale.languageCode:en
+I/flutter (15021): _buildDevicePage false
+I/flutter (15021): DeviceSenderImpl#DeviceSenderImpl, DeviceSenderImpl: 803214984
+I/flutter (15021): DeviceSenderImpl#DeviceSenderImpl, DeviceSenderImpl: 803214984
+I/flutter (15021): check dialog isMainPageVisible: true,null
+I/flutter (15021):  syncSportState start
+I/flutter (15021): DeviceSenderImpl#DeviceSenderImpl, DeviceSenderImpl: 803214984
+I/flutter (15021): DeviceSportDialogManager connectedDevice: null
+I/flutter (15021): syncSportState error Device is not connected!!!
+I/flutter (15021):  syncSportState end null
+I/flutter (15021): startIsolate Result :true
+I/flutter (15021): IsolateHelper,INIT, initMessage:MessageInit{logShowLevel: 7, showLog: true, saveLog: true, showTime: true, logFileName: log_xsound_2026-04-06_16_00_13.txt, logFoldPath: /storage/emulated/0/Android/data/com.transsion.healthlife/files/flutter}
+I/flutter (15021): INFO: 2026-04-06 16:00:13.362219: DeviceManager,BluetoothStateManagerImpl#_init(), state: BluetoothAdapterState.off
+I/flutter (15021): _getLocalFile path:/storage/emulated/0/Android/data/com.transsion.healthlife/files/flutter/log_xsound_2026-04-06_16_00_13.txt
+I/flutter (15021): net status: true
+I/flutter (15021): net status change: true
+I/flutter (15021): INFO: 2026-04-06 16:00:13.367473: DeviceManager,BluetoothStateManagerImpl#_init(), state: BluetoothAdapterState.off
+I/flutter (15021): locale:en_US
+I/flutter (15021): locale.languageCode:en
+I/flutter (15021): getPid get_pid argument get_pid get pid is null
+I/flutter (15021): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (15021): │ 2026-04-06 16:00:20.533
+I/flutter (15021): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter (15021): │ transsion - DeviceWorldClockAndroidImpl device_query_world_clock_list start
+I/flutter (15021): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (15021): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (15021): │ 2026-04-06 16:00:20.542
+I/flutter (15021): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter (15021): │ transsion - DeviceWorldClockAndroidImpl device_query_world_clock_list result: []
+I/flutter (15021): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (15021): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (15021): │ 2026-04-06 16:00:20.543
+I/flutter (15021): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter (15021): │ transsion - DeviceWorldClockAndroidImpl device_query_world_clock_list listMap: []
+I/flutter (15021): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (15021): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter (15021): │ 2026-04-06 16:00:20.545
+I/flutter (15021): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter (15021): │ transsion - World Clock sendWorldClockTranslate worldClockList: null
+I/flutter (15021): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+D/FlutterJNI(15317): Beginning load of flutter...
+D/FlutterJNI(15317): flutter (null) was loaded normally!
+I/flutter (15317): The Dart VM service is listening on http://127.0.0.1:42407/L_as2EBQjCU=/
+I/flutter (15317): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+D/FlutterRenderer(15317): Width is zero. 0,0
+D/FlutterRenderer(15317): Width is zero. 0,0
+D/FlutterJNI(15317): Sending viewport metrics to the engine.
+D/FlutterJNI(15317): Sending viewport metrics to the engine.
+I/flutter (15317): ModelViewer initializing... <http://127.0.0.1:44479/>
+D/FlutterJNI(15317): Sending viewport metrics to the engine.
+I/flutter (15317): HTML generated for model_viewer_plus:
+I/flutter (15317): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (15317): <style>
+I/flutter (15317):     body,
+I/flutter (15317):     model-viewer {
+I/flutter (15317):         width: 100%;
+I/flutter (15317):         height: 100%;
+I/flutter (15317):         margin: 0;
+I/flutter (15317):         padding: 0;
+I/flutter (15317):     }
+I/flutter (15317): 
+I/flutter (15317):     /* other-css */
+I/flutter (15317): </style>
+I/flutter (15317): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (15317): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (15317): </model-viewer>
+I/flutter (15317): 
+D/FlutterJNI(15317): Sending viewport metrics to the engine.
+D/FlutterJNI(15317): Sending viewport metrics to the engine.
+I/flutter (15317): [FLUTTER] AR View Building...
+I/flutter (15317): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (15317): [FLUTTER] AR View Building...
+I/flutter (15317): AR PLATFORM VIEW CREATED: $id
+D/FlutterJNI(15317): Sending viewport metrics to the engine.
+I/flutter (15317): [FLUTTER] AR View Building...
+D/FlutterJNI(15317): Sending viewport metrics to the engine.
+D/FlutterJNI(16613): Beginning load of flutter...
+D/FlutterJNI(16613): flutter (null) was loaded normally!
+I/flutter (16613): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+I/flutter (16613): The Dart VM service is listening on http://127.0.0.1:33907/_v33gDjaffo=/
+D/FlutterRenderer(16613): Width is zero. 0,0
+D/FlutterRenderer(16613): Width is zero. 0,0
+D/FlutterJNI(16613): Sending viewport metrics to the engine.
+D/FlutterJNI(16613): Sending viewport metrics to the engine.
+I/flutter (16613): ModelViewer initializing... <http://127.0.0.1:41405/>
+D/FlutterJNI(16613): Sending viewport metrics to the engine.
+D/FlutterJNI(16613): Sending viewport metrics to the engine.
+I/flutter (16613): HTML generated for model_viewer_plus:
+I/flutter (16613): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (16613): <style>
+I/flutter (16613):     body,
+I/flutter (16613):     model-viewer {
+I/flutter (16613):         width: 100%;
+I/flutter (16613):         height: 100%;
+I/flutter (16613):         margin: 0;
+I/flutter (16613):         padding: 0;
+I/flutter (16613):     }
+I/flutter (16613): 
+I/flutter (16613):     /* other-css */
+I/flutter (16613): </style>
+I/flutter (16613): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (16613): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (16613): </model-viewer>
+I/flutter (16613): 
+D/FlutterJNI(16613): Sending viewport metrics to the engine.
+I/flutter (16613): [FLUTTER] AR View Building...
+I/flutter (16613): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (16613): AR PLATFORM VIEW CREATED: $id
+I/flutter (16613): [FLUTTER] AR View Building...
+D/FlutterJNI(16613): Sending viewport metrics to the engine.
+D/FlutterJNI(17059): Beginning load of flutter...
+D/FlutterJNI(17059): flutter (null) was loaded normally!
+I/flutter (17059): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+I/flutter (17059):     The application opted out of Impeller by either using the
+I/flutter (17059):     `--no-enable-impeller` flag or the
+I/flutter (17059):     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+I/flutter (17059):     These options are going to go away in an upcoming Flutter release. Remove
+I/flutter (17059):     the explicit opt-out. If you need to opt-out, please report a bug describing
+I/flutter (17059):     the issue.
+I/flutter (17059): 
+I/flutter (17059):     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+I/flutter (17059): 
+I/flutter (17059): The Dart VM service is listening on http://127.0.0.1:35571/KR98vWRSLHQ=/
+D/FlutterRenderer(17059): Width is zero. 0,0
+D/FlutterRenderer(17059): Width is zero. 0,0
+D/FlutterJNI(17059): Sending viewport metrics to the engine.
+D/FlutterJNI(17059): Sending viewport metrics to the engine.
+I/flutter (17059): ModelViewer initializing... <http://127.0.0.1:38755/>
+D/FlutterJNI(17059): Sending viewport metrics to the engine.
+I/flutter (17059): HTML generated for model_viewer_plus:
+I/flutter (17059): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (17059): <style>
+I/flutter (17059):     body,
+I/flutter (17059):     model-viewer {
+I/flutter (17059):         width: 100%;
+I/flutter (17059):         height: 100%;
+I/flutter (17059):         margin: 0;
+I/flutter (17059):         padding: 0;
+I/flutter (17059):     }
+I/flutter (17059): 
+I/flutter (17059):     /* other-css */
+I/flutter (17059): </style>
+I/flutter (17059): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (17059): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (17059): </model-viewer>
+I/flutter (17059): 
+D/FlutterJNI(17059): Sending viewport metrics to the engine.
+D/FlutterJNI(17059): Sending viewport metrics to the engine.
+I/flutter (17059): [FLUTTER] AR View Building...
+I/flutter (17059): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (17059): [FLUTTER] AR View Building...
+I/flutter (17059): AR PLATFORM VIEW CREATED: $id
+D/FlutterJNI(17059): Sending viewport metrics to the engine.
+E/AndroidRuntime(17059): FATAL EXCEPTION: main
+E/AndroidRuntime(17059): Process: com.example.ar_project, PID: 17059
+E/AndroidRuntime(17059): com.google.ar.core.exceptions.FatalException
+E/AndroidRuntime(17059): 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+E/AndroidRuntime(17059): 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+E/AndroidRuntime(17059): 	at com.google.ar.core.Session.throwExceptionFromArStatus(Session.java:14)
+E/AndroidRuntime(17059): 	at com.google.ar.core.Session.nativeUpdate(Native Method)
+E/AndroidRuntime(17059): 	at com.google.ar.core.Session.update(Session.java:2)
+E/AndroidRuntime(17059): 	at io.github.sceneview.ar.arcore.ArSession.update(ArSession.kt:84)
+E/AndroidRuntime(17059): 	at io.github.sceneview.ar.ArSceneView.doFrame(ArSceneView.kt:395)
+E/AndroidRuntime(17059): 	at io.github.sceneview.SceneView.doFrame(SceneView.kt:503)
+E/AndroidRuntime(17059): 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1127)
+E/AndroidRuntime(17059): 	at android.view.Choreographer.doCallbacks(Choreographer.java:918)
+E/AndroidRuntime(17059): 	at android.view.Choreographer.doFrame(Choreographer.java:824)
+E/AndroidRuntime(17059): 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1112)
+E/AndroidRuntime(17059): 	at android.os.Handler.handleCallback(Handler.java:938)
+E/AndroidRuntime(17059): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(17059): 	at android.os.Looper.loopOnce(Looper.java:241)
+E/AndroidRuntime(17059): 	at android.os.Looper.loop(Looper.java:342)
+E/AndroidRuntime(17059): 	at android.app.ActivityThread.main(ActivityThread.java:8118)
+E/AndroidRuntime(17059): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(17059): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:583)
+E/AndroidRuntime(17059): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1045)
+D/FlutterJNI(18064): Beginning load of flutter...
+D/FlutterJNI(18064): flutter (null) was loaded normally!
+I/flutter (18064): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+I/flutter (18064):     The application opted out of Impeller by either using the
+I/flutter (18064):     `--no-enable-impeller` flag or the
+I/flutter (18064):     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+I/flutter (18064):     These options are going to go away in an upcoming Flutter release. Remove
+I/flutter (18064):     the explicit opt-out. If you need to opt-out, please report a bug describing
+I/flutter (18064):     the issue.
+I/flutter (18064): 
+I/flutter (18064):     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+I/flutter (18064): 
+I/flutter (18064): The Dart VM service is listening on http://127.0.0.1:44131/lZr19l8lXAo=/
+D/FlutterRenderer(18064): Width is zero. 0,0
+D/FlutterRenderer(18064): Width is zero. 0,0
+D/FlutterRenderer(18064): Width is zero. 0,0
+I/flutter (18064): ModelViewer initializing... <http://127.0.0.1:38967/>
+D/FlutterRenderer(18064): Width is zero. 0,0
+D/FlutterJNI(18064): Sending viewport metrics to the engine.
+D/FlutterJNI(18064): Sending viewport metrics to the engine.
+D/FlutterJNI(18064): Sending viewport metrics to the engine.
+I/flutter (18064): [FLUTTER] AR View Building...
+I/flutter (18064): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (18064): [FLUTTER] AR View Building...
+I/flutter (18064): AR PLATFORM VIEW CREATED: $id
+D/FlutterJNI(18064): Sending viewport metrics to the engine.
+E/AndroidRuntime(18064): FATAL EXCEPTION: main
+E/AndroidRuntime(18064): Process: com.example.ar_project, PID: 18064
+E/AndroidRuntime(18064): com.google.ar.core.exceptions.FatalException
+E/AndroidRuntime(18064): 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+E/AndroidRuntime(18064): 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+E/AndroidRuntime(18064): 	at com.google.ar.core.Session.throwExceptionFromArStatus(Session.java:14)
+E/AndroidRuntime(18064): 	at com.google.ar.core.Session.nativeUpdate(Native Method)
+E/AndroidRuntime(18064): 	at com.google.ar.core.Session.update(Session.java:2)
+E/AndroidRuntime(18064): 	at io.github.sceneview.ar.arcore.ArSession.update(ArSession.kt:84)
+E/AndroidRuntime(18064): 	at io.github.sceneview.ar.ArSceneView.doFrame(ArSceneView.kt:395)
+E/AndroidRuntime(18064): 	at io.github.sceneview.SceneView.doFrame(SceneView.kt:503)
+E/AndroidRuntime(18064): 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1127)
+E/AndroidRuntime(18064): 	at android.view.Choreographer.doCallbacks(Choreographer.java:918)
+E/AndroidRuntime(18064): 	at android.view.Choreographer.doFrame(Choreographer.java:824)
+E/AndroidRuntime(18064): 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1112)
+E/AndroidRuntime(18064): 	at android.os.Handler.handleCallback(Handler.java:938)
+E/AndroidRuntime(18064): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(18064): 	at android.os.Looper.loopOnce(Looper.java:241)
+E/AndroidRuntime(18064): 	at android.os.Looper.loop(Looper.java:342)
+E/AndroidRuntime(18064): 	at android.app.ActivityThread.main(ActivityThread.java:8118)
+E/AndroidRuntime(18064): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(18064): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:583)
+E/AndroidRuntime(18064): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1045)
+D/FlutterJNI(19102): Beginning load of flutter...
+D/FlutterJNI(19102): flutter (null) was loaded normally!
+I/flutter (19102): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+I/flutter (19102):     The application opted out of Impeller by either using the
+I/flutter (19102):     `--no-enable-impeller` flag or the
+I/flutter (19102):     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+I/flutter (19102):     These options are going to go away in an upcoming Flutter release. Remove
+I/flutter (19102):     the explicit opt-out. If you need to opt-out, please report a bug describing
+I/flutter (19102):     the issue.
+I/flutter (19102): 
+I/flutter (19102):     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+I/flutter (19102): 
+I/flutter (19102): The Dart VM service is listening on http://127.0.0.1:42451/7kllaYQS75M=/
+D/FlutterRenderer(19102): Width is zero. 0,0
+D/FlutterRenderer(19102): Width is zero. 0,0
+D/FlutterJNI(19102): Sending viewport metrics to the engine.
+I/flutter (19102): HTML generated for model_viewer_plus:
+I/flutter (19102): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (19102): <style>
+I/flutter (19102):     body,
+I/flutter (19102):     model-viewer {
+I/flutter (19102):         width: 100%;
+I/flutter (19102):         height: 100%;
+I/flutter (19102):         margin: 0;
+I/flutter (19102):         padding: 0;
+I/flutter (19102):     }
+I/flutter (19102): 
+I/flutter (19102):     /* other-css */
+I/flutter (19102): </style>
+I/flutter (19102): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (19102): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (19102): </model-viewer>
+I/flutter (19102): 
+D/FlutterJNI(19102): Sending viewport metrics to the engine.
+D/FlutterJNI(19102): Sending viewport metrics to the engine.
+I/flutter (19102): [FLUTTER] AR View Building...
+I/flutter (19102): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (19102): [FLUTTER] AR View Building...
+I/flutter (19102): AR PLATFORM VIEW CREATED: $id
+D/FlutterJNI(19102): Sending viewport metrics to the engine.
+I/flutter (19102): [FLUTTER] AR View Building...
+I/flutter (19102): [FLUTTER] AR View Building...
+E/AndroidRuntime(19102): FATAL EXCEPTION: main
+E/AndroidRuntime(19102): Process: com.example.ar_project, PID: 19102
+E/AndroidRuntime(19102): com.google.ar.core.exceptions.MissingGlContextException
+E/AndroidRuntime(19102): 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+E/AndroidRuntime(19102): 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+E/AndroidRuntime(19102): 	at com.google.ar.core.Session.throwExceptionFromArStatus(Session.java:14)
+E/AndroidRuntime(19102): 	at com.google.ar.core.Session.nativeUpdate(Native Method)
+E/AndroidRuntime(19102): 	at com.google.ar.core.Session.update(Session.java:2)
+E/AndroidRuntime(19102): 	at io.github.sceneview.ar.arcore.ArSession.update(ArSession.kt:84)
+E/AndroidRuntime(19102): 	at io.github.sceneview.ar.ArSceneView.doFrame(ArSceneView.kt:395)
+E/AndroidRuntime(19102): 	at io.github.sceneview.SceneView.doFrame(SceneView.kt:503)
+E/AndroidRuntime(19102): 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1127)
+E/AndroidRuntime(19102): 	at android.view.Choreographer.doCallbacks(Choreographer.java:918)
+E/AndroidRuntime(19102): 	at android.view.Choreographer.doFrame(Choreographer.java:824)
+E/AndroidRuntime(19102): 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1112)
+E/AndroidRuntime(19102): 	at android.os.Handler.handleCallback(Handler.java:938)
+E/AndroidRuntime(19102): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(19102): 	at android.os.Looper.loopOnce(Looper.java:241)
+E/AndroidRuntime(19102): 	at android.os.Looper.loop(Looper.java:342)
+E/AndroidRuntime(19102): 	at android.app.ActivityThread.main(ActivityThread.java:8118)
+E/AndroidRuntime(19102): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(19102): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:583)
+E/AndroidRuntime(19102): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1045)
+D/FlutterJNI(20529): Beginning load of flutter...
+D/FlutterJNI(20529): flutter (null) was loaded normally!
+I/flutter (20529): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+I/flutter (20529):     The application opted out of Impeller by either using the
+I/flutter (20529):     `--no-enable-impeller` flag or the
+I/flutter (20529):     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+I/flutter (20529):     These options are going to go away in an upcoming Flutter release. Remove
+I/flutter (20529):     the explicit opt-out. If you need to opt-out, please report a bug describing
+I/flutter (20529):     the issue.
+I/flutter (20529): 
+I/flutter (20529):     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+I/flutter (20529): 
+I/flutter (20529): The Dart VM service is listening on http://127.0.0.1:38321/Q6wkSOq7YFM=/
+D/FlutterRenderer(20529): Width is zero. 0,0
+D/FlutterRenderer(20529): Width is zero. 0,0
+D/FlutterRenderer(20529): Width is zero. 0,0
+D/FlutterJNI(20529): Sending viewport metrics to the engine.
+I/flutter (20529): ModelViewer initializing... <http://127.0.0.1:36601/>
+D/FlutterJNI(20529): Sending viewport metrics to the engine.
+I/flutter (20529): HTML generated for model_viewer_plus:
+I/flutter (20529): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (20529): <style>
+I/flutter (20529):     body,
+I/flutter (20529):     model-viewer {
+I/flutter (20529):         width: 100%;
+I/flutter (20529):         height: 100%;
+I/flutter (20529):         margin: 0;
+I/flutter (20529):         padding: 0;
+I/flutter (20529):     }
+I/flutter (20529): 
+I/flutter (20529):     /* other-css */
+I/flutter (20529): </style>
+I/flutter (20529): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (20529): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (20529): </model-viewer>
+I/flutter (20529): 
+D/FlutterJNI(20529): Sending viewport metrics to the engine.
+D/FlutterJNI(20529): Sending viewport metrics to the engine.
+I/flutter (20529): [FLUTTER] AR View Building...
+I/flutter (20529): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (20529): [FLUTTER] AR View Building...
+I/flutter (20529): AR PLATFORM VIEW CREATED: $id
+D/FlutterJNI(20529): Sending viewport metrics to the engine.
+E/AndroidRuntime(20529): FATAL EXCEPTION: main
+E/AndroidRuntime(20529): Process: com.example.ar_project, PID: 20529
+E/AndroidRuntime(20529): com.google.ar.core.exceptions.FatalException
+E/AndroidRuntime(20529): 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+E/AndroidRuntime(20529): 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+E/AndroidRuntime(20529): 	at com.google.ar.core.Session.throwExceptionFromArStatus(Session.java:14)
+E/AndroidRuntime(20529): 	at com.google.ar.core.Session.nativeUpdate(Native Method)
+E/AndroidRuntime(20529): 	at com.google.ar.core.Session.update(Session.java:2)
+E/AndroidRuntime(20529): 	at io.github.sceneview.ar.arcore.ArSession.update(ArSession.kt:84)
+E/AndroidRuntime(20529): 	at io.github.sceneview.ar.ArSceneView.doFrame(ArSceneView.kt:395)
+E/AndroidRuntime(20529): 	at io.github.sceneview.SceneView.doFrame(SceneView.kt:503)
+E/AndroidRuntime(20529): 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1127)
+E/AndroidRuntime(20529): 	at android.view.Choreographer.doCallbacks(Choreographer.java:918)
+E/AndroidRuntime(20529): 	at android.view.Choreographer.doFrame(Choreographer.java:824)
+E/AndroidRuntime(20529): 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1112)
+E/AndroidRuntime(20529): 	at android.os.Handler.handleCallback(Handler.java:938)
+E/AndroidRuntime(20529): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(20529): 	at android.os.Looper.loopOnce(Looper.java:241)
+E/AndroidRuntime(20529): 	at android.os.Looper.loop(Looper.java:342)
+E/AndroidRuntime(20529): 	at android.app.ActivityThread.main(ActivityThread.java:8118)
+E/AndroidRuntime(20529): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(20529): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:583)
+E/AndroidRuntime(20529): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1045)
+D/FlutterJNI(22504): Beginning load of flutter...
+D/FlutterJNI(22504): flutter (null) was loaded normally!
+I/flutter (22504): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+I/flutter (22504):     The application opted out of Impeller by either using the
+I/flutter (22504):     `--no-enable-impeller` flag or the
+I/flutter (22504):     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+I/flutter (22504):     These options are going to go away in an upcoming Flutter release. Remove
+I/flutter (22504):     the explicit opt-out. If you need to opt-out, please report a bug describing
+I/flutter (22504):     the issue.
+I/flutter (22504): 
+I/flutter (22504):     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+I/flutter (22504): 
+I/flutter (22504): The Dart VM service is listening on http://127.0.0.1:44093/Ma7ERku2Of4=/
+D/FlutterRenderer(22504): Width is zero. 0,0
+D/FlutterRenderer(22504): Width is zero. 0,0
+D/FlutterJNI(22504): Sending viewport metrics to the engine.
+D/FlutterJNI(22504): Sending viewport metrics to the engine.
+I/flutter (22504): ModelViewer initializing... <http://127.0.0.1:33921/>
+D/FlutterJNI(22504): Sending viewport metrics to the engine.
+I/flutter (22504): HTML generated for model_viewer_plus:
+I/flutter (22504): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (22504): <style>
+I/flutter (22504):     body,
+I/flutter (22504):     model-viewer {
+I/flutter (22504):         width: 100%;
+I/flutter (22504):         height: 100%;
+I/flutter (22504):         margin: 0;
+I/flutter (22504):         padding: 0;
+I/flutter (22504):     }
+I/flutter (22504): 
+I/flutter (22504):     /* other-css */
+I/flutter (22504): </style>
+I/flutter (22504): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (22504): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (22504): </model-viewer>
+I/flutter (22504): 
+D/FlutterJNI(23841): Beginning load of flutter...
+D/FlutterJNI(23841): flutter (null) was loaded normally!
+I/flutter (23841): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+I/flutter (23841):     The application opted out of Impeller by either using the
+I/flutter (23841):     `--no-enable-impeller` flag or the
+I/flutter (23841):     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+I/flutter (23841):     These options are going to go away in an upcoming Flutter release. Remove
+I/flutter (23841):     the explicit opt-out. If you need to opt-out, please report a bug describing
+I/flutter (23841):     the issue.
+I/flutter (23841): 
+I/flutter (23841):     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+I/flutter (23841): 
+I/flutter (23841): The Dart VM service is listening on http://127.0.0.1:35577/9mKsK_HavuQ=/
+D/FlutterRenderer(23841): Width is zero. 0,0
+D/FlutterRenderer(23841): Width is zero. 0,0
+D/FlutterJNI(23841): Sending viewport metrics to the engine.
+I/flutter (23841): ModelViewer initializing... <http://127.0.0.1:42111/>
+D/FlutterJNI(23841): Sending viewport metrics to the engine.
+I/flutter (23841): HTML generated for model_viewer_plus:
+I/flutter (23841): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (23841): <style>
+I/flutter (23841):     body,
+I/flutter (23841):     model-viewer {
+I/flutter (23841):         width: 100%;
+I/flutter (23841):         height: 100%;
+I/flutter (23841):         margin: 0;
+I/flutter (23841):         padding: 0;
+I/flutter (23841):     }
+I/flutter (23841): 
+I/flutter (23841):     /* other-css */
+I/flutter (23841): </style>
+I/flutter (23841): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (23841): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (23841): </model-viewer>
+I/flutter (23841): 
+D/FlutterJNI(23841): Sending viewport metrics to the engine.
+D/FlutterJNI(23841): Sending viewport metrics to the engine.
+I/flutter (23841): [FLUTTER] AR View Building...
+I/flutter (23841): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (23841): [FLUTTER] AR View Building...
+I/flutter (23841): AR PLATFORM VIEW CREATED: $id
+D/FlutterJNI(23841): Sending viewport metrics to the engine.
+I/flutter (23841): [FLUTTER] Checking for modelLocalPath...
+I/flutter (23841): [FLUTTER] Model ready at /data/user/0/com.example.ar_project/app_flutter/pizza.glb! Invoking initial placement...
+I/flutter (23841): [FLUTTER] _onAddOrReset called, modelLocalPath: /data/user/0/com.example.ar_project/app_flutter/pizza.glb
+I/flutter (23841): [FLUTTER] Invoking placePizza with path: /data/user/0/com.example.ar_project/app_flutter/pizza.glb
+I/flutter (23841): [FLUTTER] AR View Building...
+E/AndroidRuntime(23841): FATAL EXCEPTION: main
+E/AndroidRuntime(23841): Process: com.example.ar_project, PID: 23841
+E/AndroidRuntime(23841): com.google.ar.core.exceptions.MissingGlContextException
+E/AndroidRuntime(23841): 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+E/AndroidRuntime(23841): 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+E/AndroidRuntime(23841): 	at com.google.ar.core.Session.throwExceptionFromArStatus(Session.java:14)
+E/AndroidRuntime(23841): 	at com.google.ar.core.Session.nativeUpdate(Native Method)
+E/AndroidRuntime(23841): 	at com.google.ar.core.Session.update(Session.java:2)
+E/AndroidRuntime(23841): 	at io.github.sceneview.ar.arcore.ArSession.update(ArSession.kt:84)
+E/AndroidRuntime(23841): 	at io.github.sceneview.ar.ArSceneView.doFrame(ArSceneView.kt:395)
+E/AndroidRuntime(23841): 	at io.github.sceneview.SceneView.doFrame(SceneView.kt:503)
+E/AndroidRuntime(23841): 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1127)
+E/AndroidRuntime(23841): 	at android.view.Choreographer.doCallbacks(Choreographer.java:918)
+E/AndroidRuntime(23841): 	at android.view.Choreographer.doFrame(Choreographer.java:824)
+E/AndroidRuntime(23841): 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1112)
+E/AndroidRuntime(23841): 	at android.os.Handler.handleCallback(Handler.java:938)
+E/AndroidRuntime(23841): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(23841): 	at android.os.Looper.loopOnce(Looper.java:241)
+E/AndroidRuntime(23841): 	at android.os.Looper.loop(Looper.java:342)
+E/AndroidRuntime(23841): 	at android.app.ActivityThread.main(ActivityThread.java:8118)
+E/AndroidRuntime(23841): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(23841): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:583)
+E/AndroidRuntime(23841): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1045)
+D/FlutterJNI(25736): Beginning load of flutter...
+D/FlutterJNI(25736): flutter (null) was loaded normally!
+I/flutter (25736): [IMPORTANT:flutter/shell/common/shell.cc(528)] [Action Required]: Impeller opt-out deprecated.
+I/flutter (25736):     The application opted out of Impeller by either using the
+I/flutter (25736):     `--no-enable-impeller` flag or the
+I/flutter (25736):     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+I/flutter (25736):     These options are going to go away in an upcoming Flutter release. Remove
+I/flutter (25736):     the explicit opt-out. If you need to opt-out, please report a bug describing
+I/flutter (25736):     the issue.
+I/flutter (25736): 
+I/flutter (25736):     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+I/flutter (25736): 
+I/flutter (25736): The Dart VM service is listening on http://127.0.0.1:41989/bUkAdrefApo=/
+D/FlutterRenderer(25736): Width is zero. 0,0
+D/FlutterRenderer(25736): Width is zero. 0,0
+D/FlutterRenderer(25736): Width is zero. 0,0
+I/flutter (25736): ModelViewer initializing... <http://127.0.0.1:37937/>
+D/FlutterRenderer(25736): Width is zero. 0,0
+I/flutter (25736): HTML generated for model_viewer_plus:
+I/flutter (25736): <meta name="viewport" content="width=device-width, initial-scale=1" />
+I/flutter (25736): <style>
+I/flutter (25736):     body,
+I/flutter (25736):     model-viewer {
+I/flutter (25736):         width: 100%;
+I/flutter (25736):         height: 100%;
+I/flutter (25736):         margin: 0;
+I/flutter (25736):         padding: 0;
+I/flutter (25736):     }
+I/flutter (25736): 
+I/flutter (25736):     /* other-css */
+I/flutter (25736): </style>
+I/flutter (25736): <script type="module" src="model-viewer.min.js" defer></script>
+I/flutter (25736): <model-viewer src="&#47;model" alt="A 3D model of a pizza" camera-controls disable-zoom auto-rotate style="background-color: rgba(0, 0, 0, 0); ">
+I/flutter (25736): </model-viewer>
+I/flutter (25736): 
+D/FlutterJNI(25736): Sending viewport metrics to the engine.
+D/FlutterJNI(25736): Sending viewport metrics to the engine.
+D/FlutterJNI(25736): Sending viewport metrics to the engine.
+I/flutter (25736): [FLUTTER] AR View Building...
+I/flutter (25736): [FLUTTER] onCreatePlatformView called with ID: 1
+I/flutter (25736): [FLUTTER] AR View Building...
+I/flutter (25736): AR PLATFORM VIEW CREATED: $id
+D/FlutterJNI(25736): Sending viewport metrics to the engine.
+I/flutter (25736): [FLUTTER] Checking for modelLocalPath...
+I/flutter (25736): [FLUTTER] Model ready at /data/user/0/com.example.ar_project/app_flutter/pizza.glb! Invoking initial placement...
+I/flutter (25736): [FLUTTER] _onAddOrReset called, modelLocalPath: /data/user/0/com.example.ar_project/app_flutter/pizza.glb
+I/flutter (25736): [FLUTTER] Invoking placePizza with path: /data/user/0/com.example.ar_project/app_flutter/pizza.glb
+I/flutter (25736): [FLUTTER] AR View Building...
+E/AndroidRuntime(25736): FATAL EXCEPTION: main
+E/AndroidRuntime(25736): Process: com.example.ar_project, PID: 25736
+E/AndroidRuntime(25736): com.google.ar.core.exceptions.MissingGlContextException
+E/AndroidRuntime(25736): 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+E/AndroidRuntime(25736): 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+E/AndroidRuntime(25736): 	at com.google.ar.core.Session.throwExceptionFromArStatus(Session.java:14)
+E/AndroidRuntime(25736): 	at com.google.ar.core.Session.nativeUpdate(Native Method)
+E/AndroidRuntime(25736): 	at com.google.ar.core.Session.update(Session.java:2)
+E/AndroidRuntime(25736): 	at io.github.sceneview.ar.arcore.ArSession.update(ArSession.kt:84)
+E/AndroidRuntime(25736): 	at io.github.sceneview.ar.ArSceneView.doFrame(ArSceneView.kt:395)
+E/AndroidRuntime(25736): 	at io.github.sceneview.SceneView.doFrame(SceneView.kt:503)
+E/AndroidRuntime(25736): 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1127)
+E/AndroidRuntime(25736): 	at android.view.Choreographer.doCallbacks(Choreographer.java:918)
+E/AndroidRuntime(25736): 	at android.view.Choreographer.doFrame(Choreographer.java:824)
+E/AndroidRuntime(25736): 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1112)
+E/AndroidRuntime(25736): 	at android.os.Handler.handleCallback(Handler.java:938)
+E/AndroidRuntime(25736): 	at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime(25736): 	at android.os.Looper.loopOnce(Looper.java:241)
+E/AndroidRuntime(25736): 	at android.os.Looper.loop(Looper.java:342)
+E/AndroidRuntime(25736): 	at android.app.ActivityThread.main(ActivityThread.java:8118)
+E/AndroidRuntime(25736): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(25736): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:583)
+E/AndroidRuntime(25736): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1045)
