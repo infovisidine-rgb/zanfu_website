@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../utils/web_back_helper.dart';
 import '../controllers/order_controller.dart';
 import '../utils/app_colors.dart';
 import '../widgets/custom_header.dart';
@@ -55,7 +57,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         showBackButton: true,
         showCartIcon: false,
         onBackTap: widget.asSidePanel
-            ? () => Navigator.of(context).maybePop()
+            ? () {
+                Navigator.of(context).maybePop();
+              }
             : null,
         onRefreshTap: isLoaded ? _refreshOrders : null,
         isRefreshing: isRefreshing,

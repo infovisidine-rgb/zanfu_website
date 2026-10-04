@@ -143,10 +143,14 @@ class _HomeTypewriterSearchFieldState extends State<HomeTypewriterSearchField> {
     final small = ResponsiveHelper.isSmallMobile(context);
     final hint =
         _visible.isEmpty ? 'Search for ' : 'Search for $_visible';
-    final maxW = ResponsiveHelper.isMobile(context) ? double.infinity : 520.0;
+    final isMobile = ResponsiveHelper.isMobile(context);
+    final maxW = isMobile ? double.infinity : 520.0;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, small ? 16 : 36, 16, small ? 10 : 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isMobile ? 12 : 24,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxW),
@@ -162,20 +166,22 @@ class _HomeTypewriterSearchFieldState extends State<HomeTypewriterSearchField> {
               focusNode: widget.focusNode,
               textAlignVertical: TextAlignVertical.center,
               style: TextStyle(
-                fontSize: small ? 14 : 17,
+                fontSize: small ? 16 : 20,
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w500,
+                height: 1.2,
               ),
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: small ? 13 : 16,
+                  fontSize: small ? 15 : 18,
+                  height: 1.2,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
                   color: Colors.white,
-                  size: small ? 18 : 22,
+                  size: small ? 20 : 24,
                 ),
                 suffixIcon: widget.showClear
                     ? IconButton(
@@ -189,7 +195,7 @@ class _HomeTypewriterSearchFieldState extends State<HomeTypewriterSearchField> {
                     : null,
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(
-                  vertical: small ? 10 : 18,
+                  vertical: isMobile ? 10 : 16,
                 ),
               ),
             ),

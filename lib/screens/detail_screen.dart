@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../utils/web_js_helper.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -15,6 +18,8 @@ import '../models/menu_item_model.dart';
 import '../utils/device_ar_capability.dart';
 import '../utils/visidine_ar_open.dart';
 import '../utils/app_navigation.dart';
+import 'package:go_router/go_router.dart';
+import '../utils/web_back_helper.dart';
 import '../widgets/shimmer.dart';
 import '../widgets/local_cached_image.dart';
 import '../widgets/discount_badge.dart';
@@ -34,24 +39,29 @@ class DetailScreen extends StatefulWidget {
   final int initialQuantity;
   final bool isEditing;
   final Map<String, String>? sizeModelUrls;
+
   /// Size key → display name from Firestore `size_model_urls.*.name`.
   final Map<String, String> sizeModelDisplayNames;
+
   /// Section title for size picker (Firestore `size_selection_label`).
   final String sizeSelectionLabel;
+
   /// Ordered keys from Firestore `deal_model_types` for size display order.
   final List<String> dealModelTypesOrder;
   final bool isDeal;
   final List<DealGroup> dealGroups;
   final List<String> dealFixedItems;
   final Map<String, int> dealModelQuantities;
+
   /// URL → display name from Firestore `name` fields.
   final Map<String, String> modelDisplayNames;
   final List<String>? initialDealOptions;
+
   /// Laptop/desktop: shown inside a large dialog instead of a full route.
   final bool asDialog;
 
   const DetailScreen({
-    super.key, 
+    super.key,
     required this.model,
     this.initialVariation,
     this.initialToppings,
@@ -81,9 +91,7 @@ class DetailScreen extends StatefulWidget {
     final wide = ResponsiveHelper.isDesktop(context);
     final page = builder(wide);
     if (!wide) {
-      return Navigator.of(context).push<T>(
-        MaterialPageRoute(builder: (_) => page),
-      );
+      return context.push<T>('/product', extra: page);
     }
     final size = MediaQuery.sizeOf(context);
     return showDialog<T>(
@@ -139,7 +147,6 @@ class _BoxCornersMiniLoaderState extends State<_BoxCornersMiniLoader>
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     final squareSize = widget.size * 0.55;
@@ -152,10 +159,7 @@ class _BoxCornersMiniLoaderState extends State<_BoxCornersMiniLoader>
           SizedBox(
             width: squareSize,
             height: squareSize,
-            child: Image.asset(
-              'assets/icon_square.png',
-              fit: BoxFit.contain,
-            ),
+            child: Image.asset('assets/icon_square.png', fit: BoxFit.contain),
           ),
           AnimatedBuilder(
             animation: _controller,
@@ -211,33 +215,58 @@ class _ModelViewerWithCornersLoader extends StatefulWidget {
 class _ModelViewerWithCornersLoaderState
     extends State<_ModelViewerWithCornersLoader> {
   bool _loading = true;
+  bool _showSpinner = false;
   bool _loadNotified = false;
 
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) {
+      registerJsCallback('onModelLoaded_${widget.src.hashCode}', () {
+        _onModelLoaded();
+      });
+    }
+    // Only show spinner if loading takes more than 800ms (avoids flash for cached models)
+    Future<void>.delayed(const Duration(milliseconds: 800), () {
+      if (mounted && _loading) {
+        setState(() => _showSpinner = true);
+      }
+    });
     // Safety fallback: ensure spinner disappears after 6 seconds max
     Future<void>.delayed(const Duration(seconds: 6), () {
-      if (mounted && _loading) setState(() => _loading = false);
+      if (mounted && _loading) {
+        setState(() {
+          _loading = false;
+          _showSpinner = false;
+        });
+      }
+      _notifyLoaded();
     });
-    Future<void>.delayed(const Duration(seconds: 2), () {
-      if (!mounted || _loadNotified) return;
+  }
+
+  void _notifyLoaded() {
+    if (!_loadNotified) {
       _loadNotified = true;
       widget.onLoaded?.call();
-    });
+    }
   }
 
   void _onModelLoaded() {
     if (mounted && _loading) {
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _showSpinner = false;
+      });
     }
+    _notifyLoaded();
   }
 
   @override
   Widget build(BuildContext context) {
-    final viewerId = 'detail_mvp_${widget.src.hashCode}';
+    final viewerId = 'viewer_${widget.src.hashCode}';
 
     return Stack(
+      alignment: Alignment.center,
       children: [
         ModelViewer(
           id: viewerId,
@@ -278,7 +307,8 @@ html, body {
               },
             ),
           },
-          relatedJs: '''
+          relatedJs:
+              '''
 (function () {
   function attach() {
     var viewer = document.getElementById("$viewerId");
@@ -287,26 +317,31 @@ html, body {
       if (window.ModelViewerLoadChannel && window.ModelViewerLoadChannel.postMessage) {
         window.ModelViewerLoadChannel.postMessage("loaded");
       }
+      var cb = 'onModelLoaded_${widget.src.hashCode}';
+      if (window.parent && window.parent[cb]) {
+        window.parent[cb]();
+      }
     }
-    if (viewer.loaded) {
+    if (viewer.modelIsVisible) {
       notify();
     } else {
+      viewer.addEventListener("model-visibility", notify, { once: true });
       viewer.addEventListener("load", notify, { once: true });
       viewer.addEventListener("error", notify, { once: true });
+      // Fallback
+      setTimeout(notify, 3000);
     }
   }
   attach();
 })();
 ''',
         ),
-        if (_loading)
+        if (_showSpinner)
           Positioned.fill(
             child: IgnorePointer(
               child: Container(
-                color: AppColors.scaffoldBackground,
-                child: const Center(
-                  child: _BoxCornersMiniLoader(size: 56),
-                ),
+                color: Colors.transparent,
+                child: const Center(child: _BoxCornersMiniLoader(size: 56)),
               ),
             ),
           ),
@@ -314,6 +349,8 @@ html, body {
     );
   }
 }
+
+
 
 class _DetailScreenState extends State<DetailScreen>
     with TickerProviderStateMixin {
@@ -324,6 +361,7 @@ class _DetailScreenState extends State<DetailScreen>
   final Set<String> _selectedToppings = {};
   final CartController _cart = CartController();
   final Map<int, String> _selectedGroupOptions = {};
+
   /// Tracks which deal-choice groups the user actually tapped.
   /// Default options may be prefilled for UI, but we don't want to treat
   /// them as "selected" for AR bottom bar names.
@@ -331,6 +369,7 @@ class _DetailScreenState extends State<DetailScreen>
   Future<String>? _modelSrcFuture;
   String? _activeModelUrl;
   bool _hasTappedItem = false;
+
   /// Which deal row owns the eye (avoids duplicate eyes when URLs repeat).
   int? _previewGroupIndex;
   bool _previewIsFixedItem = false;
@@ -349,12 +388,14 @@ class _DetailScreenState extends State<DetailScreen>
   Offset? _handEndGlobal;
   bool _handFlying = false;
   bool _vdPulseRunning = false;
+
   /// False on web laptops / desktops — Visidine hidden (no camera AR).
   bool _deviceSupportsAr = false;
   bool _handArrived = false;
   bool _vdPulsePlayed = false;
   bool _modelFullscreenOpen = false;
   double _topOverscrollAcc = 0;
+
   /// True only after scroll has fully settled at the top — next NEW pull can open fullscreen.
   bool _settledAtTopReady = false;
 
@@ -381,8 +422,7 @@ class _DetailScreenState extends State<DetailScreen>
   /// First fixed item only when there are no choice options.
   bool _shouldShowDealTapHintOnFixed(int index) {
     if (!_listTapHintVisible || !widget.isDeal) return false;
-    final hasChoice =
-        widget.dealGroups.any((g) => g.options.isNotEmpty);
+    final hasChoice = widget.dealGroups.any((g) => g.options.isNotEmpty);
     if (hasChoice) return false;
     return index == 0;
   }
@@ -468,7 +508,11 @@ class _DetailScreenState extends State<DetailScreen>
     }
 
     // Legacy fallback only when Firestore name is missing.
-    final filename = url.split('/').last.split('?').first
+    final filename = url
+        .split('/')
+        .last
+        .split('?')
+        .first
         .replaceAll('.glb', '')
         .replaceAll('.usdz', '')
         .replaceAll('-optimized', '')
@@ -476,13 +520,16 @@ class _DetailScreenState extends State<DetailScreen>
     final pattern = RegExp(r'(?<=[a-z])(?=[A-Z])');
     String name = filename.split(pattern).join(' ');
     name = name.replaceAll('BBq', 'BBQ').replaceAll('bbq', 'BBQ');
-    
+
     // Capitalize first letters of words
-    name = name.split(' ').map((word) {
-      if (word.isEmpty) return '';
-      return word[0].toUpperCase() + word.substring(1);
-    }).join(' ');
-    
+    name = name
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return '';
+          return word[0].toUpperCase() + word.substring(1);
+        })
+        .join(' ');
+
     return name;
   }
 
@@ -510,7 +557,7 @@ class _DetailScreenState extends State<DetailScreen>
       setState(() => _deviceSupportsAr = ok);
       if (ok) _playViewByVisidinePulse();
     });
-    
+
     if (widget.initialVariation != null) {
       _selectedVariation = widget.initialVariation;
       final v = _variations.firstWhere(
@@ -522,7 +569,7 @@ class _DetailScreenState extends State<DetailScreen>
       _selectedVariation = _variations[0]['name'];
       _selectedPriceValue = _variations[0]['price'];
     }
-    
+
     if (widget.initialToppings != null) {
       _selectedToppings.addAll(widget.initialToppings!);
     }
@@ -530,7 +577,8 @@ class _DetailScreenState extends State<DetailScreen>
     if (widget.isDeal) {
       for (int i = 0; i < widget.dealGroups.length; i++) {
         final group = widget.dealGroups[i];
-        if (widget.initialDealOptions != null && widget.initialDealOptions!.length > i) {
+        if (widget.initialDealOptions != null &&
+            widget.initialDealOptions!.length > i) {
           final savedName = widget.initialDealOptions![i];
           final matchingUrl = group.itemUrls.firstWhere(
             (url) =>
@@ -547,7 +595,9 @@ class _DetailScreenState extends State<DetailScreen>
     }
 
     _reloadModelSrc();
-    _connectivitySub = Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      _onConnectivityChanged,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _runListTapCoachSequence();
@@ -680,10 +730,7 @@ class _DetailScreenState extends State<DetailScreen>
       modelOrigin.dy + modelBox.size.height * 0.62,
     );
     // Land over the model text.
-    _handEndGlobal = Offset(
-      targetOrigin.dx + 18,
-      targetOrigin.dy + 4,
-    );
+    _handEndGlobal = Offset(targetOrigin.dx + 18, targetOrigin.dy + 4);
 
     setState(() => _handFlying = true);
     await _flyHandCtrl.forward(from: 0);
@@ -754,7 +801,9 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Future<void> _loadDescription() async {
-    final desc = FirestoreService.getCachedDescriptionForProduct(widget.model.name);
+    final desc = FirestoreService.getCachedDescriptionForProduct(
+      widget.model.name,
+    );
     if (desc != null && desc.isNotEmpty && mounted) {
       setState(() => _description = desc);
     }
@@ -785,14 +834,16 @@ class _DetailScreenState extends State<DetailScreen>
     return 'Variation';
   }
 
-
-
   String _expandSizeName(String name) {
     switch (name.trim().toUpperCase()) {
-      case 'M': return 'Medium';
-      case 'L': return 'Large';
-      case 'S': return 'Small';
-      default: return name;
+      case 'M':
+        return 'Medium';
+      case 'L':
+        return 'Large';
+      case 'S':
+        return 'Small';
+      default:
+        return name;
     }
   }
 
@@ -809,11 +860,7 @@ class _DetailScreenState extends State<DetailScreen>
 
   /// Small eye on the row whose 3D model is currently previewed above.
   Widget _modelPreviewEye() {
-    return Icon(
-      Icons.visibility_outlined,
-      size: 16,
-      color: AppColors.primary,
-    );
+    return Icon(Icons.visibility_outlined, size: 16, color: AppColors.primary);
   }
 
   /// Deal: eye only while a 3D model is on top, and only on that exact row.
@@ -841,7 +888,9 @@ class _DetailScreenState extends State<DetailScreen>
         // - "Medium 2 890"
         // - "Small 1 450.5"
         // Logic: "name" can contain digits/spaces, and the *last* number is the price.
-        final match = RegExp(r'^(.+?)\s+(\d+(?:\.\d+)?)\s*$').firstMatch(cleanPart);
+        final match = RegExp(
+          r'^(.+?)\s+(\d+(?:\.\d+)?)\s*$',
+        ).firstMatch(cleanPart);
         if (match != null) {
           var rawName = match.group(1)!.trim();
           // Remove currency tokens if admin format includes them in the name part.
@@ -867,7 +916,9 @@ class _DetailScreenState extends State<DetailScreen>
     var order = widget.dealModelTypesOrder;
     var sizeUrls = widget.sizeModelUrls ?? const <String, String>{};
     if (order.isEmpty || sizeUrls.isEmpty) {
-      final cached = FirestoreService.findCachedProductByName(widget.model.name);
+      final cached = FirestoreService.findCachedProductByName(
+        widget.model.name,
+      );
       if (cached != null) {
         if (order.isEmpty) order = cached.dealModelTypesOrder;
         if (sizeUrls.isEmpty) sizeUrls = cached.sizeModelUrls;
@@ -1082,10 +1133,9 @@ class _DetailScreenState extends State<DetailScreen>
       final counts = <String, int>{};
       final samples = <String, FoodModel>{};
       for (final m in arModels) {
-        final String cleanedKey = (m.path.trim().isNotEmpty
-                ? _cleanModelNameFromUrl(m.path)
-                : m.name)
-            .trim();
+        final String cleanedKey =
+            (m.path.trim().isNotEmpty ? _cleanModelNameFromUrl(m.path) : m.name)
+                .trim();
         if (cleanedKey.isEmpty) continue;
 
         counts[cleanedKey] = (counts[cleanedKey] ?? 0) + 1;
@@ -1272,10 +1322,13 @@ class _DetailScreenState extends State<DetailScreen>
         return FadeTransition(
           opacity: anim,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.06),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.06),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
+                ),
             child: child,
           ),
         );
@@ -1361,7 +1414,8 @@ class _DetailScreenState extends State<DetailScreen>
     }
 
     // Deal choice without .glb → show that option's image path.
-    final previewImage = (widget.isDeal &&
+    final previewImage =
+        (widget.isDeal &&
             _hasTappedItem &&
             _activeModelUrl != null &&
             _activeModelUrl!.trim().isNotEmpty &&
@@ -1476,125 +1530,376 @@ class _DetailScreenState extends State<DetailScreen>
 
   Widget _buildDetailsSheet({required bool desktopSplit}) {
     return Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(desktopSplit ? 0.0 : 28.0),
-                    topRight: Radius.circular(desktopSplit ? 0.0 : 28.0),
-                  ),
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(28),
-                        topRight: Radius.circular(28),
-                      ),
-                      child: ColoredBox(
-                        color: AppColors.matteBlack,
-                        child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.model.name,
-                    style: TextStyle(
-                      fontSize: desktopSplit ? 28 : 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  if (_description.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _description,
-                      style: TextStyle(
-                        fontSize: desktopSplit ? 15 : 12,
-                        color: Colors.white,
-                        height: 1.5,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(desktopSplit ? 0.0 : 28.0),
+          topRight: Radius.circular(desktopSplit ? 0.0 : 28.0),
+        ),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(28),
+              topRight: Radius.circular(28),
+            ),
+            child: ColoredBox(
+              color: AppColors.matteBlack,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   const SizedBox(height: 16),
-                  if (widget.model.hasDiscount && _selectedPriceValue > 0) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 8),
                         Text(
-                          "Rs ${_discountedSelectedPrice.toInt()}",
+                          widget.model.name,
                           style: TextStyle(
-                            fontSize: desktopSplit ? 20 : 22,
-                            fontWeight: FontWeight.w800,
+                            fontSize: desktopSplit ? 28 : 22,
+                            fontWeight: FontWeight.w900,
                             color: AppColors.primary,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Text(
-                          "Rs ${_selectedPriceValue.toInt()}",
-                          style: TextStyle(
-                            fontSize: desktopSplit ? 13 : 15,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                            decoration: TextDecoration.lineThrough,
+                        if (_description.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _description,
+                            style: TextStyle(
+                              fontSize: desktopSplit ? 15 : 12,
+                              color: Colors.white,
+                              height: 1.5,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                        const Spacer(),
-                        DiscountBadge(
-                          label: widget.model.isPercentDiscount
-                              ? '${widget.model.discountValue.toInt()}% OFF'
-                              : 'Rs ${_discountAmountOnSelected.toInt()} OFF',
-                          fontSize: 12,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                        ],
+                        const SizedBox(height: 16),
+                        if (widget.model.hasDiscount &&
+                            _selectedPriceValue > 0) ...[
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Rs ${_discountedSelectedPrice.toInt()}",
+                                style: TextStyle(
+                                  fontSize: desktopSplit ? 20 : 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Rs ${_selectedPriceValue.toInt()}",
+                                style: TextStyle(
+                                  fontSize: desktopSplit ? 13 : 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textSecondary,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                              const Spacer(),
+                              DiscountBadge(
+                                label: widget.model.isPercentDiscount
+                                    ? '${widget.model.discountValue.toInt()}% OFF'
+                                    : 'Rs ${_discountAmountOnSelected.toInt()} OFF',
+                                fontSize: 12,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ] else
-                    Text(
-                      "Rs ${_selectedPriceValue.toInt()}",
-                      style: TextStyle(
-                        fontSize: desktopSplit ? 20 : 22,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  const SizedBox(height: 24),
+                        ] else
+                          Text(
+                            "Rs ${_selectedPriceValue.toInt()}",
+                            style: TextStyle(
+                              fontSize: desktopSplit ? 20 : 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        const SizedBox(height: 24),
 
-                  // Deal Choice Groups first, then included/static items below
-                  if (widget.isDeal && widget.dealGroups.isNotEmpty) ...[
-                    ...List.generate(widget.dealGroups.length, (gIndex) {
-                      final group = widget.dealGroups[gIndex];
-                      final groupTitle =
-                          group.title.trim().isNotEmpty ? group.title.trim() : 'Select One';
+                        // Deal Choice Groups first, then included/static items below
+                        if (widget.isDeal && widget.dealGroups.isNotEmpty) ...[
+                          ...List.generate(widget.dealGroups.length, (gIndex) {
+                            final group = widget.dealGroups[gIndex];
+                            final groupTitle = group.title.trim().isNotEmpty
+                                ? group.title.trim()
+                                : 'Select One';
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        groupTitle,
+                                        style: TextStyle(
+                                          fontSize: desktopSplit ? 13 : 15,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: AppColors.flameGradient,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        "REQUIRED",
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.onPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Column(
+                                  children: group.options.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    final optionIndex = entry.key;
+                                    final option = entry.value;
+                                    final optionUrl = option.url;
+                                    final optionName =
+                                        option.name.trim().isNotEmpty
+                                        ? option.name.trim()
+                                        : _cleanModelNameFromUrl(optionUrl);
+                                    final isSelected =
+                                        _selectedGroupOptions[gIndex] ==
+                                        optionUrl;
+                                    final showTapHint =
+                                        _shouldShowDealTapHintOnChoice(
+                                          gIndex,
+                                          optionIndex,
+                                        );
+
+                                    return GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () {
+                                        if (isSelected &&
+                                            _activeModelUrl == optionUrl &&
+                                            _previewGroupIndex == gIndex)
+                                          return;
+                                        AppHaptics.selection();
+                                        setState(() {
+                                          _selectedGroupOptions[gIndex] =
+                                              optionUrl;
+                                          _touchedDealGroupIndices.add(gIndex);
+                                          _activeModelUrl = optionUrl;
+                                          _hasTappedItem = true;
+                                          _previewGroupIndex = gIndex;
+                                          _previewIsFixedItem = false;
+                                          if (FoodModel.isGlbOrUsdzUrl(
+                                            optionUrl,
+                                          )) {
+                                            _reloadModelSrc();
+                                          }
+                                        });
+                                      },
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 6.0,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 17,
+                                                height: 17,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: isSelected
+                                                        ? AppColors.primary
+                                                        : AppColors
+                                                              .textSecondary,
+                                                    width: 1.5,
+                                                  ),
+                                                ),
+                                                child: isSelected
+                                                    ? Center(
+                                                        child: Container(
+                                                          width: 9,
+                                                          height: 9,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                                color: AppColors
+                                                                    .primary,
+                                                                shape: BoxShape
+                                                                    .circle,
+                                                              ),
+                                                        ),
+                                                      )
+                                                    : null,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: _itemNameWithTapHint(
+                                                  text: optionName,
+                                                  showHint: showTapHint,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.w800
+                                                        : FontWeight.w500,
+                                                    color: isSelected
+                                                        ? AppColors.primary
+                                                        : AppColors
+                                                              .textSecondary,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (_showEyeOnDealChoice(
+                                                gIndex,
+                                                optionUrl,
+                                              )) ...[
+                                                const SizedBox(width: 8),
+                                                _modelPreviewEye(),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                                const SizedBox(height: 16),
+                                const Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: AppColors.divider,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            );
+                          }),
+                        ],
+
+                        // Included / static items below choice groups
+                        if (widget.isDeal &&
+                            widget.dealFixedItems.isNotEmpty) ...[
+                          const Text(
+                            "Included in deal",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ...widget.dealFixedItems.asMap().entries.map((entry) {
+                            final fixedIndex = entry.key;
+                            final itemUrl = entry.value;
+                            final itemName = _cleanModelNameFromUrl(itemUrl);
+                            final itemQty = _dealQtyFor(itemUrl);
+                            final showTapHint = _shouldShowDealTapHintOnFixed(
+                              fixedIndex,
+                            );
+
+                            return GestureDetector(
+                              onTap: () {
+                                if (_activeModelUrl == itemUrl &&
+                                    _previewIsFixedItem)
+                                  return;
+                                AppHaptics.selection();
+                                setState(() {
+                                  _activeModelUrl = itemUrl;
+                                  _hasTappedItem = true;
+                                  _previewIsFixedItem = true;
+                                  _previewGroupIndex = null;
+                                  if (FoodModel.isGlbOrUsdzUrl(itemUrl)) {
+                                    _reloadModelSrc();
+                                  }
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6.0,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 17,
+                                      height: 17,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppColors.primary,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Container(
+                                          width: 9,
+                                          height: 9,
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.primary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _itemNameWithTapHint(
+                                        text: itemQty > 1
+                                            ? "$itemQty $itemName"
+                                            : itemName,
+                                        showHint: showTapHint,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                    if (_showEyeOnDealFixed(itemUrl)) ...[
+                                      const SizedBox(width: 8),
+                                      _modelPreviewEye(),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+
+                        if (_variations.length > 1) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  groupTitle,
-                                  style: TextStyle(
-                                    fontSize: desktopSplit ? 13 : 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
+                              Text(
+                                _sizeSectionTitle(),
+                                style: TextStyle(
+                                  fontSize: desktopSplit ? 14 : 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   gradient: AppColors.flameGradient,
                                   borderRadius: BorderRadius.circular(12),
@@ -1602,7 +1907,7 @@ class _DetailScreenState extends State<DetailScreen>
                                 child: const Text(
                                   "REQUIRED",
                                   style: TextStyle(
-                                    fontSize: 9,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w900,
                                     color: AppColors.onPrimary,
                                   ),
@@ -1610,307 +1915,113 @@ class _DetailScreenState extends State<DetailScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Column(
-                            children: group.options.asMap().entries.map((entry) {
-                              final optionIndex = entry.key;
-                              final option = entry.value;
-                              final optionUrl = option.url;
-                              final optionName = option.name.trim().isNotEmpty
-                                  ? option.name.trim()
-                                  : _cleanModelNameFromUrl(optionUrl);
-                              final isSelected = _selectedGroupOptions[gIndex] == optionUrl;
-                              final showTapHint = _shouldShowDealTapHintOnChoice(
-                                gIndex,
-                                optionIndex,
-                              );
+                          const SizedBox(height: 12),
 
-                              return GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () {
-                                  if (isSelected && _activeModelUrl == optionUrl && _previewGroupIndex == gIndex) return;
-                                  AppHaptics.selection();
-                                  setState(() {
-                                    _selectedGroupOptions[gIndex] = optionUrl;
-                                    _touchedDealGroupIndices.add(gIndex);
-                                    _activeModelUrl = optionUrl;
-                                    _hasTappedItem = true;
-                                    _previewGroupIndex = gIndex;
-                                    _previewIsFixedItem = false;
-                                    if (FoodModel.isGlbOrUsdzUrl(optionUrl)) {
-                                      _reloadModelSrc();
-                                    }
-                                  });
-                                },
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 17,
-                                          height: 17,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                          child: isSelected
-                                              ? Center(
-                                                  child: Container(
-                                                    width: 9,
-                                                    height: 9,
-                                                    decoration: const BoxDecoration(
-                                                      color: AppColors.primary,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                )
-                                              : null,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: _itemNameWithTapHint(
-                                            text: optionName,
-                                            showHint: showTapHint,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                                            ),
+                          ..._variations.asMap().entries.map((entry) {
+                            final vIndex = entry.key;
+                            final v = entry.value;
+                            final isSelected = _selectedVariation == v['name'];
+                            final sizeName = v['name']?.toString() ?? '';
+                            final showTapHint = _shouldShowSizeTapHint(vIndex);
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                if (isSelected) return;
+                                AppHaptics.selection();
+                                setState(() {
+                                  _selectedVariation = v['name'];
+                                  _selectedPriceValue = v['price'];
+                                  _activeModelUrl = null;
+                                  _hasTappedItem = true;
+                                  _reloadModelSrc();
+                                });
+                              },
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 4.0,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 17,
+                                        height: 17,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? AppColors.primary
+                                                : AppColors.textSecondary,
+                                            width: 1.5,
                                           ),
                                         ),
-                                        if (_showEyeOnDealChoice(gIndex, optionUrl)) ...[
-                                          const SizedBox(width: 8),
-                                          _modelPreviewEye(),
-                                        ],
+                                        child: isSelected
+                                            ? Center(
+                                                child: Container(
+                                                  width: 9,
+                                                  height: 9,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        color:
+                                                            AppColors.primary,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _itemNameWithTapHint(
+                                          text: sizeName,
+                                          showHint: showTapHint,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w800
+                                                : FontWeight.w500,
+                                            color: isSelected
+                                                ? AppColors.primary
+                                                : AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isSelected) ...[
+                                        _modelPreviewEye(),
+                                        const SizedBox(width: 8),
                                       ],
-                                    ),
+                                      Text(
+                                        "Rs ${widget.model.discountedFrom((v['price'] as double)).toInt()}",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          color: isSelected
+                                              ? AppColors.primary
+                                              : AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 16),
-                          const Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: AppColors.divider,
-                          ),
-                          const SizedBox(height: 16),
+                              ),
+                            );
+                          }).toList(),
+                          const SizedBox(height: 24),
                         ],
-                      );
-                    }),
-                  ],
 
-                  // Included / static items below choice groups
-                  if (widget.isDeal && widget.dealFixedItems.isNotEmpty) ...[
-                    const Text(
-                      "Included in deal",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...widget.dealFixedItems.asMap().entries.map((entry) {
-                      final fixedIndex = entry.key;
-                      final itemUrl = entry.value;
-                      final itemName = _cleanModelNameFromUrl(itemUrl);
-                      final itemQty = _dealQtyFor(itemUrl);
-                      final showTapHint = _shouldShowDealTapHintOnFixed(fixedIndex);
-
-                      return GestureDetector(
-                        onTap: () {
-                          if (_activeModelUrl == itemUrl && _previewIsFixedItem) return;
-                          AppHaptics.selection();
-                          setState(() {
-                            _activeModelUrl = itemUrl;
-                            _hasTappedItem = true;
-                            _previewIsFixedItem = true;
-                            _previewGroupIndex = null;
-                            if (FoodModel.isGlbOrUsdzUrl(itemUrl)) {
-                              _reloadModelSrc();
-                            }
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6.0),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 17,
-                                height: 17,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.primary,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Container(
-                                    width: 9,
-                                    height: 9,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _itemNameWithTapHint(
-                                  text: itemQty > 1 ? "$itemQty $itemName" : itemName,
-                                  showHint: showTapHint,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                              if (_showEyeOnDealFixed(itemUrl)) ...[
-                                const SizedBox(width: 8),
-                                _modelPreviewEye(),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-
-                  if (_variations.length > 1) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _sizeSectionTitle(),
-                          style: TextStyle(
-                            fontSize: desktopSplit ? 14 : 16,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: AppColors.flameGradient,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            "REQUIRED",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.onPrimary,
-                            ),
-                          ),
-                        ),
+                        const SizedBox(height: 120),
                       ],
                     ),
-                    const SizedBox(height: 12),
-
-                    ..._variations.asMap().entries.map((entry) {
-                      final vIndex = entry.key;
-                      final v = entry.value;
-                      final isSelected = _selectedVariation == v['name'];
-                      final sizeName = v['name']?.toString() ?? '';
-                      final showTapHint = _shouldShowSizeTapHint(vIndex);
-                      return GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          if (isSelected) return;
-                          AppHaptics.selection();
-                          setState(() {
-                            _selectedVariation = v['name'];
-                            _selectedPriceValue = v['price'];
-                            _activeModelUrl = null;
-                            _hasTappedItem = true;
-                            _reloadModelSrc();
-                          });
-                        },
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 17,
-                                  height: 17,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: isSelected
-                                      ? Center(
-                                          child: Container(
-                                            width: 9,
-                                            height: 9,
-                                            decoration: const BoxDecoration(
-                                              color: AppColors.primary,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _itemNameWithTapHint(
-                                    text: sizeName,
-                                    showHint: showTapHint,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                                if (isSelected) ...[
-                                  _modelPreviewEye(),
-                                  const SizedBox(width: 8),
-                                ],
-                                Text(
-                                  "Rs ${widget.model.discountedFrom((v['price'] as double)).toInt()}",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    const SizedBox(height: 24),
-                  ],
-
-                  const SizedBox(height: 120),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
-
 
   void _onAddOrUpdatePressed() {
     if (_selectedVariation == null && !widget.isDeal) return;
@@ -1965,9 +2076,7 @@ class _DetailScreenState extends State<DetailScreen>
         opacity: (_selectedVariation == null && !widget.isDeal) ? 0.6 : 1.0,
         child: Container(
           height: 46,
-          width: desktop
-              ? 210
-              : (tablet ? 160 : null),
+          width: desktop ? 210 : (tablet ? 160 : null),
           decoration: BoxDecoration(
             gradient: AppColors.flameGradient,
             borderRadius: BorderRadius.circular(10),
@@ -2011,7 +2120,11 @@ class _DetailScreenState extends State<DetailScreen>
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           IconButton(
-            icon: const Icon(Icons.remove, color: AppColors.textPrimary, size: 20),
+            icon: const Icon(
+              Icons.remove,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
             onPressed: () {
@@ -2039,22 +2152,14 @@ class _DetailScreenState extends State<DetailScreen>
     if (desktop) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          qty,
-          const SizedBox(width: 10),
-          addButton,
-        ],
+        children: [qty, const SizedBox(width: 10), addButton],
       );
     }
 
     if (tablet) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          qty,
-          const SizedBox(width: 8),
-          addButton,
-        ],
+        children: [qty, const SizedBox(width: 8), addButton],
       );
     }
 
@@ -2074,8 +2179,9 @@ class _DetailScreenState extends State<DetailScreen>
         : widget.model.is3DAvailable;
     final wide = ResponsiveHelper.isDesktop(context);
 
-    final headerBg =
-        widget.asDialog ? AppColors.matteBlack : AppColors.cardBackground;
+    final headerBg = widget.asDialog
+        ? AppColors.matteBlack
+        : AppColors.cardBackground;
 
     return Scaffold(
       backgroundColor: headerBg,
@@ -2099,9 +2205,27 @@ class _DetailScreenState extends State<DetailScreen>
                   Icons.close_rounded,
                   color: AppColors.textPrimary,
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (widget.asDialog) {
+                    Navigator.of(context).maybePop();
+                  } else {
+                    safeBack(context);
+                  }
+                },
               )
-            : null,
+            : IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: AppColors.textPrimary,
+                ),
+                onPressed: () {
+                  if (widget.asDialog) {
+                    Navigator.of(context).maybePop();
+                  } else {
+                    safeBack(context);
+                  }
+                },
+              ),
         // Title only — no location subtitle
         title: Text(
           widget.isEditing ? "Edit Item" : "Choose Item",
@@ -2205,88 +2329,94 @@ class _DetailScreenState extends State<DetailScreen>
       body: ColoredBox(
         color: AppColors.cardBackground,
         child: Stack(
-        key: _bodyStackKey,
-        children: [
-          if (wide)
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 6,
-                      child: _buildPinnedModelHero(
-                        show3D: show3D,
-                        overrideHeight: constraints.maxHeight,
-                        desktopSplit: true,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 4,
-                      child: MediaQuery(
-                        data: MediaQuery.of(context).copyWith(
-                          textScaler: TextScaler.linear(
-                            MediaQuery.textScalerOf(context).scale(1.0) * 1.05,
-                          ),
-                        ),
-                        child: ColoredBox(
-                          color: AppColors.matteBlack,
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  controller: _scrollController,
-                                  physics: const ClampingScrollPhysics(
-                                    parent: AlwaysScrollableScrollPhysics(),
-                                  ),
-                                  child: _buildDetailsSheet(desktopSplit: true),
-                                ),
-                              ),
-                              SafeArea(
-                                top: false,
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                                  child: _buildQtyAddCartBar(desktop: true),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            )
-          else
-            NotificationListener<ScrollNotification>(
-              onNotification: (n) => _handleTopPullToFullscreen(n, show3D),
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                physics: const ClampingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: _pinnedModelHeight(show3D) - 28,
-                      child: OverflowBox(
-                        alignment: Alignment.topCenter,
-                        maxHeight: _pinnedModelHeight(show3D),
+          key: _bodyStackKey,
+          children: [
+            if (wide)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        flex: 6,
                         child: _buildPinnedModelHero(
                           show3D: show3D,
-                          ),
+                          overrideHeight: constraints.maxHeight,
+                          desktopSplit: true,
+                        ),
                       ),
-                    ),
-                    _buildDetailsSheet(desktopSplit: false),
-                  ],
+                      Expanded(
+                        flex: 4,
+                        child: MediaQuery(
+                          data: MediaQuery.of(context).copyWith(
+                            textScaler: TextScaler.linear(
+                              MediaQuery.textScalerOf(context).scale(1.0) *
+                                  1.05,
+                            ),
+                          ),
+                          child: ColoredBox(
+                            color: AppColors.matteBlack,
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    controller: _scrollController,
+                                    physics: const ClampingScrollPhysics(
+                                      parent: AlwaysScrollableScrollPhysics(),
+                                    ),
+                                    child: _buildDetailsSheet(
+                                      desktopSplit: true,
+                                    ),
+                                  ),
+                                ),
+                                SafeArea(
+                                  top: false,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      20,
+                                      8,
+                                      20,
+                                      16,
+                                    ),
+                                    child: _buildQtyAddCartBar(desktop: true),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              )
+            else
+              NotificationListener<ScrollNotification>(
+                onNotification: (n) => _handleTopPullToFullscreen(n, show3D),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const ClampingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: _pinnedModelHeight(show3D) - 28,
+                        child: OverflowBox(
+                          alignment: Alignment.topCenter,
+                          maxHeight: _pinnedModelHeight(show3D),
+                          child: _buildPinnedModelHero(show3D: show3D),
+                        ),
+                      ),
+                      _buildDetailsSheet(desktopSplit: false),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          _buildFlyingHandOverlay(),
-        ],
-      ),
+            _buildFlyingHandOverlay(),
+          ],
+        ),
       ),
       bottomNavigationBar: wide
           ? null

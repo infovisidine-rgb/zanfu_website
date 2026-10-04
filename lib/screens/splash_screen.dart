@@ -260,7 +260,7 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => MenuScreen(showLoginOnStart: user == null),
+        builder: (_) => const MenuScreen(),
       ),
     );
   }

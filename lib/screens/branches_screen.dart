@@ -136,16 +136,18 @@ class Branch {
     String openTime = extractTime(pickOpen());
     String closeTime = extractTime(pickClose());
     if (openTime.isEmpty || closeTime.isEmpty) {
-      final combined = (data['hours'] ??
-              data['timings'] ??
-              data['timing'] ??
-              data['workingHours'] ??
-              data['working_hours'] ??
-              '')
-          .toString();
-      final rangeMatch =
-          RegExp(r'(.+?)\s*[-–—to]+\s*(.+)', caseSensitive: false)
-              .firstMatch(combined);
+      final combined =
+          (data['hours'] ??
+                  data['timings'] ??
+                  data['timing'] ??
+                  data['workingHours'] ??
+                  data['working_hours'] ??
+                  '')
+              .toString();
+      final rangeMatch = RegExp(
+        r'(.+?)\s*[-–—to]+\s*(.+)',
+        caseSensitive: false,
+      ).firstMatch(combined);
       if (rangeMatch != null) {
         if (openTime.isEmpty) openTime = extractTime(rangeMatch.group(1));
         if (closeTime.isEmpty) closeTime = extractTime(rangeMatch.group(2));
@@ -159,14 +161,16 @@ class Branch {
       'Branch[$docId] keys=${data.keys.toList()} open=$openTime close=$closeTime',
     );
 
-    final rawPhone = data['phone'] ??
+    final rawPhone =
+        data['phone'] ??
         data['phone_number'] ??
         data['phoneNumber'] ??
         data['number'] ??
         data['contact'] ??
         '';
 
-    final rawAddress = data['address'] ??
+    final rawAddress =
+        data['address'] ??
         data['address_line'] ??
         data['location'] ??
         data['addr'] ??
@@ -175,10 +179,12 @@ class Branch {
     return Branch(
       id: docId,
       name: data['name']?.toString() ?? 'Branch',
-      latitude: (data['latitude'] as num?)?.toDouble() ??
+      latitude:
+          (data['latitude'] as num?)?.toDouble() ??
           (data['lat'] as num?)?.toDouble() ??
           0.0,
-      longitude: (data['longitude'] as num?)?.toDouble() ??
+      longitude:
+          (data['longitude'] as num?)?.toDouble() ??
           (data['lng'] as num?)?.toDouble() ??
           (data['lon'] as num?)?.toDouble() ??
           0.0,
@@ -343,13 +349,14 @@ class _BranchesScreenState extends State<BranchesScreen>
       try {
         final parts = cleaned.split(RegExp(r'[:\.]'));
         final hour = int.parse(parts[0].trim());
-        final minute =
-            parts.length > 1 ? int.parse(parts[1].trim().split(' ').first) : 0;
+        final minute = parts.length > 1
+            ? int.parse(parts[1].trim().split(' ').first)
+            : 0;
         final h = hour == 0
             ? 12
             : hour > 12
-                ? hour - 12
-                : hour;
+            ? hour - 12
+            : hour;
         final m = minute.toString().padLeft(2, '0');
         final period = hour < 12 ? 'AM' : 'PM';
         return '$h:$m $period';
@@ -368,8 +375,10 @@ class _BranchesScreenState extends State<BranchesScreen>
 
   void _setShowAllBranches(bool show) {
     setState(() => _showAllBranches = show);
-    Provider.of<BottomNavController>(context, listen: false)
-        .setHideBottomNav(show);
+    Provider.of<BottomNavController>(
+      context,
+      listen: false,
+    ).setHideBottomNav(show);
   }
 
   @override
@@ -462,38 +471,44 @@ class _BranchesScreenState extends State<BranchesScreen>
       // If still empty, use hardcoded fallback
       if (fetchedBranches.isEmpty) {
         fetchedBranches = _fallbackBranchesData
-            .map((d) => Branch(
-                  id: d['id'],
-                  name: d['name'],
-                  latitude: d['latitude'],
-                  longitude: d['longitude'],
-                  status: d['status'] ?? 'Open Now',
-                  openingTime: d['openingTime'] ?? '09:00',
-                  closingTime: d['closingTime'] ?? '22:00',
-                  phone: d['phone'] ?? '',
-                  address: d['address'] ?? '',
-                ))
+            .map(
+              (d) => Branch(
+                id: d['id'],
+                name: d['name'],
+                latitude: d['latitude'],
+                longitude: d['longitude'],
+                status: d['status'] ?? 'Open Now',
+                openingTime: d['openingTime'] ?? '09:00',
+                closingTime: d['closingTime'] ?? '22:00',
+                phone: d['phone'] ?? '',
+                address: d['address'] ?? '',
+              ),
+            )
             .toList();
       }
 
       _rawBranches = fetchedBranches;
 
       // Initial distance calculation (position may be null yet)
-      final pos =
-          Provider.of<LocationService>(context, listen: false).currentPosition;
+      final pos = Provider.of<LocationService>(
+        context,
+        listen: false,
+      ).currentPosition;
       _recalculateDistances(pos);
 
       // Move camera when map is ready (IndexedStack / loading can delay FlutterMap)
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final latestPos =
-            Provider.of<LocationService>(context, listen: false).currentPosition;
+        final latestPos = Provider.of<LocationService>(
+          context,
+          listen: false,
+        ).currentPosition;
         if (latestPos != null) {
-          _safeMoveMap(
-              LatLng(latestPos.latitude, latestPos.longitude), 13.0);
+          _safeMoveMap(LatLng(latestPos.latitude, latestPos.longitude), 13.0);
         } else if (_branches.isNotEmpty) {
           _safeMoveMap(
-              LatLng(_branches.first.latitude, _branches.first.longitude),
-              13.0);
+            LatLng(_branches.first.latitude, _branches.first.longitude),
+            13.0,
+          );
         }
       });
     } catch (e) {
@@ -523,12 +538,10 @@ class _BranchesScreenState extends State<BranchesScreen>
     if (_rawBranches.isEmpty) return;
 
     final generation = ++_distanceCalcGeneration;
-    final originLat = userPos?.latitude ??
-        LocationService().deliveryLatitude ??
-        33.6007;
-    final originLng = userPos?.longitude ??
-        LocationService().deliveryLongitude ??
-        73.0679;
+    final originLat =
+        userPos?.latitude ?? LocationService().deliveryLatitude ?? 33.6007;
+    final originLng =
+        userPos?.longitude ?? LocationService().deliveryLongitude ?? 73.0679;
     final branches = List<Branch>.from(_rawBranches);
 
     if (mounted) {
@@ -546,7 +559,8 @@ class _BranchesScreenState extends State<BranchesScreen>
     if (!mounted || generation != _distanceCalcGeneration) return;
 
     for (var i = 0; i < branches.length; i++) {
-      branches[i].distanceKm = routeDistances[i] ??
+      branches[i].distanceKm =
+          routeDistances[i] ??
           _straightLineDistanceKm(originLat, originLng, branches[i]);
     }
 
@@ -597,7 +611,9 @@ class _BranchesScreenState extends State<BranchesScreen>
     }
 
     final nearestBranch = _branches.isNotEmpty ? _branches.first : null;
-    final otherBranches = _branches.length > 1 ? _branches.sublist(1) : <Branch>[];
+    final otherBranches = _branches.length > 1
+        ? _branches.sublist(1)
+        : <Branch>[];
 
     // ── Markers ──────────────────────────────────────────────────────────────
     final List<Marker> markers = [];
@@ -681,7 +697,8 @@ class _BranchesScreenState extends State<BranchesScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                      '${branch.name} — ${branch.distanceKm.toStringAsFixed(1)} km away'),
+                    '${branch.name} — ${branch.distanceKm.toStringAsFixed(1)} km away',
+                  ),
                   duration: const Duration(seconds: 2),
                 ),
               );
@@ -691,7 +708,10 @@ class _BranchesScreenState extends State<BranchesScreen>
               children: [
                 // Branch name label above the circle
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.88),
                     borderRadius: BorderRadius.circular(4),
@@ -754,184 +774,191 @@ class _BranchesScreenState extends State<BranchesScreen>
         }
       },
       child: Scaffold(
-      backgroundColor: AppColors.matteBlack,
-      // Tab already has Zanfu header — only show CustomHeader on full list.
-      appBar: _showAllBranches
-          ? CustomHeader(
-              title: 'Branches',
-              subtitle: '',
-              showBackButton: true,
-              showCartIcon: false,
-              onBackTap: () => _setShowAllBranches(false),
-            )
-          : null,
-      body: _showAllBranches
-          ? ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              children: [
-                if (nearestBranch != null) ...[
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 12.0),
-                    child: Text(
-                      'Nearest Branch',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  _buildBranchTile(nearestBranch, userPos),
-                  const SizedBox(height: 24),
-                ],
-                if (otherBranches.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 12.0),
-                    child: Text(
-                      'Other Branches',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  ...otherBranches.map((b) => _buildBranchTile(b, userPos)),
-                ],
-              ],
-            )
-          : Stack(
-              children: [
-                Positioned.fill(
-                  child: FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      initialCenter: userPos != null
-                          ? LatLng(userPos.latitude, userPos.longitude)
-                          : (_branches.isNotEmpty
-                              ? LatLng(
-                                  _branches.first.latitude,
-                                  _branches.first.longitude,
-                                )
-                              : const LatLng(33.6007, 73.0679)),
-                      initialZoom: 13.0,
-                      onMapReady: _onMapReady,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.zanfu.visidine_website',
-                      ),
-                      MarkerLayer(markers: markers),
-                    ],
-                  ),
+        backgroundColor: AppColors.matteBlack,
+        // Tab already has Zanfu header — only show CustomHeader on full list.
+        appBar: _showAllBranches
+            ? CustomHeader(
+                title: 'Branches',
+                subtitle: '',
+                showBackButton: true,
+                showCartIcon: false,
+                onBackTap: () => _setShowAllBranches(false),
+              )
+            : null,
+        body: _showAllBranches
+            ? ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
                 ),
-                if (userPos != null)
-                  Positioned(
-                    right: 16,
-                    bottom: 190,
-                    child: FloatingActionButton(
-                      mini: true,
-                      backgroundColor: AppColors.cardBackground,
-                      foregroundColor: AppColors.primary,
-                      onPressed: () {
-                        _moveToLocation(userPos.latitude, userPos.longitude);
-                      },
-                      child: const Icon(Icons.my_location),
-                    ),
-                  ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.matteBlack,
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(20)),
-                      border: Border(
-                        top: BorderSide(color: AppColors.border),
+                children: [
+                  if (nearestBranch != null) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        'Nearest Branch',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    _buildBranchTile(nearestBranch, userPos),
+                    const SizedBox(height: 24),
+                  ],
+                  if (otherBranches.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        'Other Branches',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    ...otherBranches.map((b) => _buildBranchTile(b, userPos)),
+                  ],
+                ],
+              )
+            : Stack(
+                children: [
+                  Positioned.fill(
+                    child: FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        initialCenter: userPos != null
+                            ? LatLng(userPos.latitude, userPos.longitude)
+                            : (_branches.isNotEmpty
+                                  ? LatLng(
+                                      _branches.first.latitude,
+                                      _branches.first.longitude,
+                                    )
+                                  : const LatLng(33.6007, 73.0679)),
+                        initialZoom: 13.0,
+                        onMapReady: _onMapReady,
+                      ),
                       children: [
-                        Center(
-                          child: Container(
-                            width: 36,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: AppColors.border,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.zanfu.visidine_website',
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Nearest Branch',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              onPressed: () {
-                                _setShowAllBranches(true);
-                              },
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Show all branches',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  SizedBox(width: 2),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        if (nearestBranch != null)
-                          _buildExpandableBranchCard(
-                            nearestBranch,
-                            userPos,
-                            compact: true,
-                            onHeaderTap: () {
-                              _moveToLocation(
-                                nearestBranch.latitude,
-                                nearestBranch.longitude,
-                              );
-                            },
-                          ),
+                        MarkerLayer(markers: markers),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-    ),
+                  if (userPos != null)
+                    Positioned(
+                      right: 16,
+                      bottom: 190,
+                      child: FloatingActionButton(
+                        mini: true,
+                        backgroundColor: AppColors.cardBackground,
+                        foregroundColor: AppColors.primary,
+                        onPressed: () {
+                          _moveToLocation(userPos.latitude, userPos.longitude);
+                        },
+                        child: const Icon(Icons.my_location),
+                      ),
+                    ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.matteBlack,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                        border: Border(
+                          top: BorderSide(color: AppColors.border),
+                        ),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 36,
+                              height: 3,
+                              decoration: BoxDecoration(
+                                color: AppColors.border,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Nearest Branch',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () {
+                                  _setShowAllBranches(true);
+                                },
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Show all branches',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(width: 2),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (nearestBranch != null)
+                            _buildExpandableBranchCard(
+                              nearestBranch,
+                              userPos,
+                              compact: true,
+                              onHeaderTap: () {
+                                _moveToLocation(
+                                  nearestBranch.latitude,
+                                  nearestBranch.longitude,
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -1106,10 +1133,7 @@ class _BranchesScreenState extends State<BranchesScreen>
                             branch.phone.isNotEmpty)
                           const SizedBox(height: 8),
                         if (branch.phone.isNotEmpty)
-                          _buildDetailRow(
-                            Icons.phone_outlined,
-                            branch.phone,
-                          ),
+                          _buildDetailRow(Icons.phone_outlined, branch.phone),
                         if (branch.address.isEmpty && branch.phone.isEmpty)
                           const Text(
                             'No extra details available',

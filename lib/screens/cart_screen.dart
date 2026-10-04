@@ -14,7 +14,6 @@ import '../controllers/home_scroll_to_menu.dart';
 import '../widgets/discount_badge.dart';
 import '../widgets/tap_hand_click_hint.dart';
 import '../widgets/visidine_brand_text.dart';
-import 'checkout_screen.dart';
 import '../utils/visidine_ar_open.dart';
 import '../services/firestore_service.dart';
 import '../models/menu_item_model.dart';
@@ -22,6 +21,8 @@ import '../widgets/app_bottom_action_button.dart';
 import '../widgets/app_cart_icon.dart';
 import '../widgets/brand_image.dart';
 import '../widgets/app_delete_icon.dart';
+import 'package:go_router/go_router.dart';
+import '../utils/web_back_helper.dart';
 
 /// Hand coach on View by VisiDine — first N cart opens after install.
 const String _kCartVisidineHintCountKey = 'cart_visidine_tap_hint_count';
@@ -268,7 +269,9 @@ class _CartScreenState extends State<CartScreen>
             showBackButton: true,
             showCartIcon: false,
             onBackTap: widget.asSidePanel
-                ? () => Navigator.of(context).maybePop()
+                ? () {
+                    Navigator.of(context).maybePop();
+                  }
                 : null,
           ),
           body: GestureDetector(
@@ -317,7 +320,11 @@ class _CartScreenState extends State<CartScreen>
           const SizedBox(height: 12),
           ExploreMenuCard(
             onTap: () {
-              Navigator.of(context).maybePop();
+              if (widget.asSidePanel) {
+                Navigator.of(context).maybePop();
+              } else {
+                safeBack(context);
+              }
               HomeScrollToMenu.instance.request();
             },
           ),
@@ -881,13 +888,10 @@ class _CartScreenState extends State<CartScreen>
           child: InkWell(
             onTap: () {
               _cart.setSpecialInstructions(_specialInstructionsController.text);
-              final nav = Navigator.of(context, rootNavigator: true);
               if (widget.asSidePanel) {
-                nav.pop();
+                Navigator.of(context, rootNavigator: true).pop();
               }
-              nav.push(
-                MaterialPageRoute(builder: (_) => const CheckoutScreen()),
-              );
+              context.push('/checkout');
             },
             child: Container(
               padding: EdgeInsets.symmetric(

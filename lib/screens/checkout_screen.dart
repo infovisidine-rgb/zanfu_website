@@ -1,4 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../utils/web_back_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -137,24 +140,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
       }
 
-      final list = await BranchLocator.getBranchesSortedByDistance(
+      var list = await BranchLocator.getBranchesSortedByDistance(
         latitude: lat,
         longitude: lng,
         orderType: orderType,
       );
       if (!mounted) return false;
 
+      if (orderType == 'Dine In') {
+        list = list
+            .where((b) => b.distanceKm != null && b.distanceKm! <= 0.1)
+            .toList();
+      }
+
       if (list.isEmpty) {
         setState(() {
           _branches = [];
           _selectedBranch = null;
           if (_checkoutController.isDelivery) {
-            _branchGateMessage =
-                'No branch available for delivery right now.';
+            _branchGateMessage = 'No branch available for delivery right now.';
           } else if (_checkoutController.isPickup) {
             _branchGateMessage = 'No pickup (takeaway) branch available.';
           } else {
-            _branchGateMessage = 'No dine-in branch available.';
+            _branchGateMessage =
+                'Dine-in orders can only be placed while you are at the restaurant.';
           }
         });
         return false;
@@ -240,7 +249,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Nearest is suggested. You can pick another.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ConstrainedBox(
@@ -313,9 +325,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                             Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 2,
-                                              ),
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: AppColors.primary
                                                     .withValues(alpha: 0.12),
@@ -410,7 +422,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  List<Widget> _branchDetailLines(BranchChoice b, {bool showStatusInline = true}) {
+  List<Widget> _branchDetailLines(
+    BranchChoice b, {
+    bool showStatusInline = true,
+  }) {
     final wide = ResponsiveHelper.isDesktop(context);
     final nameSize = wide ? 15.5 : 14.0;
     final detailSize = wide ? 13.5 : 12.0;
@@ -450,7 +465,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         const SizedBox(height: 4),
         Text(
           b.address,
-          style: TextStyle(fontSize: detailSize, color: AppColors.textSecondary),
+          style: TextStyle(
+            fontSize: detailSize,
+            color: AppColors.textSecondary,
+          ),
         ),
       ],
       if (b.distanceKm != null) ...[
@@ -479,20 +497,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         shape: BoxShape.circle,
         color: Colors.black,
         boxShadow: [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 5,
-            spreadRadius: 1,
-          ),
+          BoxShadow(color: Color(0x33000000), blurRadius: 5, spreadRadius: 1),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: EdgeInsets.all(size * 0.06),
-        child: Image.asset(
-          'assets/zanfu_logo.png',
-          fit: BoxFit.cover,
-        ),
+        child: Image.asset('assets/zanfu_logo.png', fit: BoxFit.cover),
       ),
     );
   }
@@ -501,14 +512,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final title = _checkoutController.isDelivery
         ? 'Delivery branch'
         : _checkoutController.isDineIn
-            ? 'Dine In branch'
-            : 'Pickup branch';
+        ? 'Dine In branch'
+        : 'Pickup branch';
     final branchRow = _selectedBranch == null
         ? null
         : Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _zanfuBranchLogo(size: ResponsiveHelper.isWide(context) ? 40 : 48),
+              _zanfuBranchLogo(
+                size: ResponsiveHelper.isWide(context) ? 40 : 48,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -568,7 +581,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: _loadingBranches
               ? Row(
                   children: [
-                    _zanfuBranchLogo(size: ResponsiveHelper.isWide(context) ? 40 : 48),
+                    _zanfuBranchLogo(
+                      size: ResponsiveHelper.isWide(context) ? 40 : 48,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -605,54 +620,54 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ],
                 )
               : _selectedBranch == null
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _branchGateMessage ??
-                              'Select location to find your nearest branch.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                            height: 1.35,
-                          ),
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _branchGateMessage ??
+                          'Select location to find your nearest branch.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () {
+                        if (_checkoutController.isDelivery &&
+                            !LocationService().hasDeliveryPin) {
+                          _openLocationPicker();
+                        } else {
+                          _ensureBranchAssignment(forceNearest: true);
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 0),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        _checkoutController.isDelivery &&
+                                !LocationService().hasDeliveryPin
+                            ? 'SELECT LOCATION'
+                            : 'TRY AGAIN',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
-                        const SizedBox(height: 10),
-                        TextButton(
-                          onPressed: () {
-                            if (_checkoutController.isDelivery &&
-                                !LocationService().hasDeliveryPin) {
-                              _openLocationPicker();
-                            } else {
-                              _ensureBranchAssignment(forceNearest: true);
-                            }
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            _checkoutController.isDelivery &&
-                                    !LocationService().hasDeliveryPin
-                                ? 'SELECT LOCATION'
-                                : 'TRY AGAIN',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : (_checkoutController.isPickup
-                      ? InkWell(
-                          onTap: _showBranchPicker,
-                          borderRadius: BorderRadius.circular(8),
-                          child: branchRow,
-                        )
-                      : branchRow!),
+                      ),
+                    ),
+                  ],
+                )
+              : (_checkoutController.isPickup
+                    ? InkWell(
+                        onTap: _showBranchPicker,
+                        borderRadius: BorderRadius.circular(8),
+                        child: branchRow,
+                      )
+                    : branchRow!),
         ),
       ],
     );
@@ -729,8 +744,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (variation.isNotEmpty) {
           for (final part in priceStr.split('|')) {
             final clean = part.trim();
-            final match =
-                RegExp(r'^(.+?)\s+(\d+(?:\.\d+)?)\s*$').firstMatch(clean);
+            final match = RegExp(
+              r'^(.+?)\s+(\d+(?:\.\d+)?)\s*$',
+            ).firstMatch(clean);
             if (match == null) continue;
             var name = match.group(1)!.trim().toLowerCase();
             name = name.replaceAll(RegExp(r'\b(rs|pkr)\b'), '').trim();
@@ -786,10 +802,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         builder: (_) => MapLocationPickerScreen(
           initialWrittenAddress:
               (_displayAddress == "No Location Selected" ||
-                      _displayAddress == "Loading location..." ||
-                      _displayAddress == "Fetching location...")
-                  ? loc.writtenAddress
-                  : _displayAddress,
+                  _displayAddress == "Loading location..." ||
+                  _displayAddress == "Fetching location...")
+              ? loc.writtenAddress
+              : _displayAddress,
           initialLatitude: loc.deliveryLatitude,
           initialLongitude: loc.deliveryLongitude,
         ),
@@ -1122,8 +1138,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final branch = _selectedBranch;
     if (branch == null) {
       await _showOrderBlockedDialog(
-        _branchGateMessage ??
-            'No suitable branch available for this order.',
+        _branchGateMessage ?? 'No suitable branch available for this order.',
       );
       return;
     }
@@ -1194,8 +1209,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() {
         _customerName = profile.userName;
         final p = profile.userPhone.trim();
-        _phoneNumber =
-            p.isNotEmpty ? _normalizePhoneDisplay(p) : 'No phone number added';
+        _phoneNumber = p.isNotEmpty
+            ? _normalizePhoneDisplay(p)
+            : 'No phone number added';
       });
     } catch (e) {
       debugPrint('Checkout: reload profile after sign-in failed: $e');
@@ -1206,14 +1222,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     await showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 650),
-          child: const ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(24)),
-            child: GoogleLoginScreen(),
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
+            child: const ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(24)),
+              child: GoogleLoginScreen(),
+            ),
           ),
         ),
       ),
@@ -1227,9 +1249,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   double _bodyTextSize(BuildContext context) =>
       ResponsiveHelper.isWide(context) ? 15.5 : 13.5;
 
-  Widget _buildCheckoutLeftColumn({
-    required double titleSize,
-  }) {
+  Widget _buildCheckoutLeftColumn({required double titleSize}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1337,8 +1357,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                 const SizedBox(height: 20),
 
-                if (_checkoutController.selectedOrderType ==
-                    'Delivery') ...[
+                if (_checkoutController.selectedOrderType == 'Delivery') ...[
                   Text(
                     "Deliver To",
                     style: TextStyle(
@@ -1384,8 +1403,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       color: AppColors.border,
                                     ),
                                   ),
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(
+                                  contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 10,
                                   ),
@@ -1415,8 +1433,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primary,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
                                     child: const Text(
@@ -1456,8 +1473,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                         Text(
                                           _displayAddress,
                                           style: TextStyle(
-                                            fontSize: ResponsiveHelper.isWide(
-                                                    context)
+                                            fontSize:
+                                                ResponsiveHelper.isWide(context)
                                                 ? 16
                                                 : 14,
                                             fontWeight: FontWeight.normal,
@@ -1484,12 +1501,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary
-                                          .withValues(alpha: 0.15),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.15,
+                                      ),
                                       borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
-                                        color: AppColors.primary
-                                            .withValues(alpha: 0.5),
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.5,
+                                        ),
                                       ),
                                     ),
                                     child: Row(
@@ -1602,9 +1621,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       errorText: _phoneFieldError,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: AppColors.border,
-                        ),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -1628,8 +1645,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           child: Text(
                             _phoneNumber,
                             style: TextStyle(
-                              fontSize:
-                                  ResponsiveHelper.isWide(context) ? 15 : 14,
+                              fontSize: ResponsiveHelper.isWide(context)
+                                  ? 15
+                                  : 14,
                               fontWeight: FontWeight.normal,
                               color: Colors.white,
                             ),
@@ -1663,10 +1681,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(12),
@@ -1898,6 +1913,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            onPressed: () {
+              safeBack(context);
+            },
+          ),
           centerTitle: true,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -2044,7 +2065,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   style: TextStyle(
                     fontSize: wide ? 13 : 12,
                     fontWeight: FontWeight.bold,
-                    color: selected ? AppColors.onPrimary : AppColors.textSecondary,
+                    color: selected
+                        ? AppColors.onPrimary
+                        : AppColors.textSecondary,
                   ),
                 ),
               ),

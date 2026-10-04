@@ -2,16 +2,27 @@ import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'utils/app_colors.dart';
-import 'screens/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+
 import 'controllers/bottom_nav_controller.dart';
 import 'controllers/home_banner_controller.dart';
 import 'controllers/cart_controller.dart';
+import 'controllers/favorites_controller.dart';
+import 'controllers/promotional_banner_controller.dart';
+import 'controllers/user_profile_controller.dart';
+
 import 'services/location_service.dart';
+import 'services/firestore_service.dart';
+import 'utils/google_auth_helper.dart';
+import 'utils/app_router.dart';
+
+import 'screens/menu_screen.dart';
 
 class AppScrollBehavior extends MaterialScrollBehavior {
   const AppScrollBehavior();
@@ -47,6 +58,14 @@ void main() async {
     debugPrint('Firebase init error: $e');
   }
 
+  // Preload font to prevent layout shift / text jump
+  GoogleFonts.outfit();
+  try {
+    await GoogleFonts.pendingFonts();
+  } catch (e) {
+    debugPrint('GoogleFonts preload error: $e');
+  }
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: AppColors.matteBlack,
@@ -57,6 +76,7 @@ void main() async {
       systemNavigationBarDividerColor: AppColors.matteBlack,
     ),
   );
+  
   runApp(
     MultiProvider(
       providers: [
@@ -75,7 +95,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
       scrollBehavior: const AppScrollBehavior(),
       theme: ThemeData(
@@ -126,7 +147,6 @@ class MyApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: const SplashScreen(),
     );
   }
 }

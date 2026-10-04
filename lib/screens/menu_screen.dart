@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, listEquals;
 import 'package:flutter/material.dart' hide MenuController;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_navigation.dart';
 import '../utils/app_haptics.dart';
@@ -22,6 +23,8 @@ import '../models/promotional_banner_model.dart';
 import '../models/menu_item_model.dart';
 import '../models/food_model.dart';
 import '../services/firestore_service.dart';
+import '../services/location_service.dart';
+import '../controllers/favorites_controller.dart';
 import '../widgets/shimmer.dart';
 import '../widgets/local_cached_image.dart';
 import '../widgets/zanfu_app_header.dart';
@@ -50,13 +53,8 @@ class _HomeSearchSnapshot {
 
 class MenuScreen extends StatefulWidget {
   final int initialIndex;
-  final bool showLoginOnStart;
 
-  const MenuScreen({
-    super.key,
-    this.initialIndex = 0,
-    this.showLoginOnStart = false,
-  });
+  const MenuScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -85,8 +83,9 @@ class _MenuScreenState extends State<MenuScreen> {
   final ValueNotifier<String> _homeSelectedCategoryListenable =
       ValueNotifier<String>('');
   List<FoodMenuItem> _allSearchProducts = [];
-  final ValueNotifier<_HomeSearchSnapshot> _homeSearch =
-      ValueNotifier(_HomeSearchSnapshot.empty);
+  final ValueNotifier<_HomeSearchSnapshot> _homeSearch = ValueNotifier(
+    _HomeSearchSnapshot.empty,
+  );
   bool _isHomeAutoScrolling = false;
   final Map<String, GlobalKey> _homeCategoryKeys = {};
 
@@ -96,9 +95,6 @@ class _MenuScreenState extends State<MenuScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<BottomNavController>().setSelectedIndex(0);
-        if (widget.showLoginOnStart) {
-          _showLoginDialog();
-        }
       }
     });
     _menuController = MenuController(initialIndex: widget.initialIndex);
@@ -114,10 +110,11 @@ class _MenuScreenState extends State<MenuScreen> {
     );
     FirestoreService.menuDataVersion.addListener(_reloadSearchCatalog);
     _menuController.addListener(_onMenuDataChanged);
-    _menuController.loadMenuDataFromCache();
     _searchController.addListener(_onHomeSearchChanged);
-    FirestoreService.preloadBranchesCache();
-    _reloadSearchCatalog();
+
+    // Start background initialization
+    _initializeAppBackground();
+
     HomeScrollToMenu.instance.addListener(_onExploreMenuFromCart);
     // Keep drawer / profile in sync when user signs in from checkout, etc.
     // StreamBuilder + UserProfileController listeners rebuild UI (no setState).
@@ -136,6 +133,57 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
+  Future<void> _initializeAppBackground() async {
+    try {
+      LocationService().initLocation();
+
+      await FavoritesController().load();
+      await CartController().load();
+
+      await FirestoreService.preloadMenuCache();
+      await FirestoreService.preloadBranchesCache();
+      await FirestoreService.preloadModelUrlCatalog();
+      await FirestoreService.preloadModelsCache();
+
+      FirestoreService.fetchRemoteCatalogVersion()
+          .timeout(const Duration(seconds: 5), onTimeout: () => null)
+          .then((remoteVersion) {
+            if (remoteVersion != null) {
+              FirestoreService.refreshMenuCacheInBackground();
+              FirestoreService.fetchModelUrlCatalog();
+              PromotionalBannerController().loadBanners(force: true);
+              FirestoreService.refreshBranchesCacheInBackground();
+              FirestoreService.refreshModelsCacheInBackground();
+              FirestoreService.saveLocalCatalogVersion(remoteVersion);
+            } else {
+              FirestoreService.refreshMenuCacheInBackground();
+              PromotionalBannerController().loadBanners();
+            }
+          });
+
+      if (kIsWeb) {
+        try {
+          await GoogleAuthHelper.getRedirectResult();
+        } catch (e) {
+          debugPrint('MenuScreen getRedirectResult error: $e');
+        }
+      }
+
+      if (FirebaseAuth.instance.currentUser != null) {
+        try {
+          await UserProfileController().ensureLoaded();
+        } catch (e) {
+          debugPrint('MenuScreen profile load error: $e');
+        }
+      }
+    } finally {
+      if (mounted) {
+        _menuController.loadMenuDataFromCache();
+        _reloadSearchCatalog();
+      }
+    }
+  }
+
   void _reloadSearchCatalog() {
     final cats = FirestoreService.getCachedCategories();
     final items = <FoodMenuItem>[];
@@ -152,14 +200,20 @@ class _MenuScreenState extends State<MenuScreen> {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 650),
-          child: const ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(24)),
-            child: GoogleLoginScreen(),
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
+            child: const ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(24)),
+              child: GoogleLoginScreen(),
+            ),
           ),
         ),
       ),
@@ -187,8 +241,7 @@ class _MenuScreenState extends State<MenuScreen> {
   void _onHomeSearchChanged() {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) {
-      if (!_homeSearch.value.isSearching &&
-          _homeSearch.value.results.isEmpty) {
+      if (!_homeSearch.value.isSearching && _homeSearch.value.results.isEmpty) {
         return;
       }
       _homeSearch.value = _HomeSearchSnapshot.empty;
@@ -273,9 +326,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
   /// Top carousel: Firestore website scrollable + item website banners.
   List<Object> get _mergedScrollBannerSlides => [
-        ..._promoBanners.scrollableBanners,
-        ..._menuController.bannerItems,
-      ];
+    ..._promoBanners.scrollableBanners,
+    ..._menuController.bannerItems,
+  ];
 
   /// Start / restart / stop auto-scroll based on current banner count.
   void _syncBannerTimer() {
@@ -368,32 +421,7 @@ class _MenuScreenState extends State<MenuScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Header Shimmer
-            SafeArea(
-              bottom: false,
-              child: Container(
-                color: AppColors.matteBlack,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 12.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Icon(Icons.menu, color: Colors.white, size: 28),
-                    const BrandImage(
-                      assetPath: 'assets/zanfuwhitelogo.png',
-                      height: 30,
-                    ),
-                    const Icon(
-                      AppCartIcons.outlined,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // Removed Top Header Shimmer to prevent double app bar
 
             // Location Bar Shimmer
             Container(
@@ -467,10 +495,12 @@ class _MenuScreenState extends State<MenuScreen> {
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: ResponsiveHelper.homeGridColumns(context),
                       mainAxisExtent: extent,
-                      mainAxisSpacing:
-                          ResponsiveHelper.homeGridMainSpacing(context),
-                      crossAxisSpacing:
-                          ResponsiveHelper.homeGridCrossSpacing(context),
+                      mainAxisSpacing: ResponsiveHelper.homeGridMainSpacing(
+                        context,
+                      ),
+                      crossAxisSpacing: ResponsiveHelper.homeGridCrossSpacing(
+                        context,
+                      ),
                     ),
                     itemCount: 8,
                     itemBuilder: (context, index) {
@@ -566,78 +596,82 @@ class _MenuScreenState extends State<MenuScreen> {
               ),
               child: CustomScrollView(
                 controller: _homeScrollController,
-                cacheExtent: 600,
+                cacheExtent: 99999,
                 slivers: [
-                SliverToBoxAdapter(child: _buildZanfuHeader()),
-                if (isDynamicBanners)
-                  SliverToBoxAdapter(
-                    child: _buildHomeBannerCarousel(
-                      bannerCount: bannerCount,
-                      scrollSlides: scrollSlides,
-                    ),
-                  )
-                else
-                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
-                if (displayCats.isNotEmpty)
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                if (displayCats.isNotEmpty)
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _HomeStickyCategoryTabsDelegate(
-                      height:
-                          ResponsiveHelper.stickyCategoryTabsHeight(context),
-                      categories: displayCats,
-                      selectedListenable: _homeSelectedCategoryListenable,
-                      tabScrollController: _homeCategoryTabScroll,
-                      onSelect: (category) {
-                        AppHaptics.selection();
-                        _scrollHomeToCategory(category);
-                      },
-                    ),
-                  ),
-                SliverToBoxAdapter(
-                  child: _homeWidthLimited(
-                    ValueListenableBuilder<_HomeSearchSnapshot>(
-                      valueListenable: _homeSearch,
-                      builder: (context, search, _) {
-                        return HomeTypewriterSearchField(
-                          controller: _searchController,
-                          focusNode: _searchFocus,
-                          showClear: search.isSearching,
-                          onClear: _clearHomeSearch,
-                          hintNames: hintNames,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                ValueListenableBuilder<_HomeSearchSnapshot>(
-                  valueListenable: _homeSearch,
-                  builder: (context, search, _) {
-                    if (search.isSearching) {
-                      return SliverMainAxisGroup(
-                        slivers: _homeSearchResultSlivers(search.results),
-                      );
-                    }
-                    if (displayCats.isEmpty) {
-                      return const SliverToBoxAdapter(child: SizedBox.shrink());
-                    }
-                    return SliverMainAxisGroup(
-                      slivers: [
-                        ..._homeCategorySlivers(displayCats),
-                        SliverToBoxAdapter(
-                          child: ValueListenableBuilder<int>(
-                            valueListenable: FirestoreService.branchesDataVersion,
-                            builder: (context, _, __) => _buildHomeFooter(),
-                          ),
+                  SliverToBoxAdapter(child: _buildZanfuHeader()),
+                  if (isDynamicBanners)
+                    SliverToBoxAdapter(
+                      child: _buildHomeBannerCarousel(
+                        bannerCount: bannerCount,
+                        scrollSlides: scrollSlides,
+                      ),
+                    )
+                  else
+                    const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                  if (displayCats.isNotEmpty)
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  if (displayCats.isNotEmpty)
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _HomeStickyCategoryTabsDelegate(
+                        height: ResponsiveHelper.stickyCategoryTabsHeight(
+                          context,
                         ),
-                      ],
-                    );
-                  },
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              ],
-            ),
+                        categories: displayCats,
+                        selectedListenable: _homeSelectedCategoryListenable,
+                        tabScrollController: _homeCategoryTabScroll,
+                        onSelect: (category) {
+                          AppHaptics.selection();
+                          _scrollHomeToCategory(category);
+                        },
+                      ),
+                    ),
+                  SliverToBoxAdapter(
+                    child: _homeWidthLimited(
+                      ValueListenableBuilder<_HomeSearchSnapshot>(
+                        valueListenable: _homeSearch,
+                        builder: (context, search, _) {
+                          return HomeTypewriterSearchField(
+                            controller: _searchController,
+                            focusNode: _searchFocus,
+                            showClear: search.isSearching,
+                            onClear: _clearHomeSearch,
+                            hintNames: hintNames,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  ValueListenableBuilder<_HomeSearchSnapshot>(
+                    valueListenable: _homeSearch,
+                    builder: (context, search, _) {
+                      if (search.isSearching) {
+                        return SliverMainAxisGroup(
+                          slivers: _homeSearchResultSlivers(search.results),
+                        );
+                      }
+                      if (displayCats.isEmpty) {
+                        return const SliverToBoxAdapter(
+                          child: SizedBox.shrink(),
+                        );
+                      }
+                      return SliverMainAxisGroup(
+                        slivers: [
+                          ..._homeCategorySlivers(displayCats),
+                          SliverToBoxAdapter(
+                            child: ValueListenableBuilder<int>(
+                              valueListenable:
+                                  FirestoreService.branchesDataVersion,
+                              builder: (context, _, __) => _buildHomeFooter(),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
+              ),
             ),
           ),
         );
@@ -664,7 +698,7 @@ class _MenuScreenState extends State<MenuScreen> {
         final bannerPad = 4.0;
         final bannerHeight =
             (MediaQuery.sizeOf(context).width - (bannerPad * 2)) /
-                ResponsiveHelper.bannerAspectRatio(context);
+            ResponsiveHelper.bannerAspectRatio(context);
         final page = bannerController.currentPage.clamp(0, bannerCount - 1);
         // Arrows only on desktop/laptop — not mobile or tablet.
         final showArrows =
@@ -727,7 +761,8 @@ class _MenuScreenState extends State<MenuScreen> {
                   children: [
                     NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification notification) {
-                        if (notification is ScrollStartNotification && notification.dragDetails != null) {
+                        if (notification is ScrollStartNotification &&
+                            notification.dragDetails != null) {
                           _isUserHoldingBanner = true;
                         } else if (notification is ScrollEndNotification) {
                           if (_isUserHoldingBanner) {
@@ -747,7 +782,9 @@ class _MenuScreenState extends State<MenuScreen> {
                         itemBuilder: (context, index) {
                           final slide = scrollSlides[index];
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
                             child: Material(
                               elevation: 4,
                               shadowColor: Colors.black54,
@@ -768,16 +805,9 @@ class _MenuScreenState extends State<MenuScreen> {
                         },
                       ),
                     ),
-                    if (showLeft)
-                      Positioned(
-                        left: 8,
-                        child: arrow(left: true),
-                      ),
+                    if (showLeft) Positioned(left: 8, child: arrow(left: true)),
                     if (showRight)
-                      Positioned(
-                        right: 8,
-                        child: arrow(left: false),
-                      ),
+                      Positioned(right: 8, child: arrow(left: false)),
                     if (bannerCount > 1)
                       Positioned(
                         bottom: isMobile ? 4 : 6,
@@ -786,7 +816,10 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                             child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: padH,
+                                vertical: padV,
+                              ),
                               color: Colors.black.withValues(alpha: 0.25),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -795,20 +828,26 @@ class _MenuScreenState extends State<MenuScreen> {
                                   final isActive = i == page;
                                   return AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
-                                    margin: EdgeInsets.symmetric(horizontal: isMobile ? 3 : 4),
+                                    margin: EdgeInsets.symmetric(
+                                      horizontal: isMobile ? 3 : 4,
+                                    ),
                                     width: isActive ? activeWidth : dotSize,
                                     height: dotSize,
                                     decoration: BoxDecoration(
                                       color: isActive
                                           ? AppColors.primary
                                           : Colors.white.withValues(alpha: 0.7),
-                                      borderRadius: BorderRadius.circular(dotSize / 2),
+                                      borderRadius: BorderRadius.circular(
+                                        dotSize / 2,
+                                      ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.3),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
                                           blurRadius: 2,
                                           offset: const Offset(0, 1),
-                                        )
+                                        ),
                                       ],
                                     ),
                                   );
@@ -900,20 +939,33 @@ class _MenuScreenState extends State<MenuScreen> {
     Key? key,
   }) {
     final sidePad = _homeSliverSidePadding(context);
-    return Padding(
-      key: key,
-      padding: EdgeInsets.fromLTRB(sidePad, topPadding, sidePad, 20),
-      child: Text(
-        category,
-        textAlign: TextAlign.start,
-        style: TextStyle(
-          fontSize: ResponsiveHelper.categoryTitleFontSize(context),
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.2,
-          color: Colors.white,
-          height: 1.0,
+    final pinLine = ResponsiveHelper.stickyCategoryTabsHeight(context);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: topPadding - pinLine, // Scroll exactly to where the text starts
+          left: 0,
+          right: 0,
+          height: 1,
+          child: Container(key: key),
         ),
-      ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(sidePad, topPadding, sidePad, 20),
+          child: Text(
+            category,
+            textAlign: TextAlign.start,
+            style: TextStyle(
+              fontSize: ResponsiveHelper.categoryTitleFontSize(context),
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.2,
+              color: Colors.white,
+              height: 1.0,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -996,17 +1048,12 @@ class _MenuScreenState extends State<MenuScreen> {
     return slivers;
   }
 
-
-
   void _updateHomeCategoryFromScroll() {
     if (_isHomeAutoScrolling || _homeSearch.value.isSearching) return;
     final cats = _menuController.categories;
     if (cats.isEmpty) return;
 
     String current = cats.first;
-    final pinLine = MediaQuery.paddingOf(context).top +
-        ResponsiveHelper.stickyCategoryTabsHeight(context) +
-        4;
     for (final cat in cats) {
       final key = _homeCategoryKeys[cat];
       final ctx = key?.currentContext;
@@ -1014,7 +1061,10 @@ class _MenuScreenState extends State<MenuScreen> {
       final box = ctx.findRenderObject() as RenderBox?;
       if (box == null || !box.hasSize) continue;
       final y = box.localToGlobal(Offset.zero).dy;
-      if (y <= pinLine) {
+      // Since the key is positioned exactly pinLine pixels above the title,
+      // y will be paddingTop when the title touches the bottom of the sticky header.
+      final targetY = MediaQuery.paddingOf(context).top + 8;
+      if (y <= targetY) {
         current = cat;
       }
     }
@@ -1034,23 +1084,13 @@ class _MenuScreenState extends State<MenuScreen> {
 
       final key = _homeCategoryKeys[category];
       final ctx = key?.currentContext;
-      if (ctx == null || !_homeScrollController.hasClients) return;
+      if (ctx == null) return;
 
-      final box = ctx.findRenderObject() as RenderBox?;
-      if (box == null || !box.hasSize) return;
-
-      final dy = box.localToGlobal(Offset.zero).dy;
-      final pinLine = MediaQuery.paddingOf(context).top +
-          ResponsiveHelper.stickyCategoryTabsHeight(context);
-      final delta = dy - pinLine;
-      final target = (_homeScrollController.offset + delta).clamp(
-        0.0,
-        _homeScrollController.position.maxScrollExtent,
-      );
-      await _homeScrollController.animateTo(
-        target,
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
+      await Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutQuad,
+        alignment: 0.0,
       );
     } finally {
       _isHomeAutoScrolling = false;
@@ -1093,8 +1133,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
     Widget footerLinks({bool center = false}) {
       return Column(
-        crossAxisAlignment:
-            center ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        crossAxisAlignment: center
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           _FooterLink(
             label: 'FAQs',
@@ -1120,10 +1161,9 @@ class _MenuScreenState extends State<MenuScreen> {
         builder: (context, _) {
           final livePhone = _appConfig.customerSupportNumber.trim();
           return Column(
-            crossAxisAlignment:
-                wide && !compactWide
-                    ? CrossAxisAlignment.start
-                    : CrossAxisAlignment.center,
+            crossAxisAlignment: wide && !compactWide
+                ? CrossAxisAlignment.start
+                : CrossAxisAlignment.center,
             children: [
               if (livePhone.isNotEmpty || (wide && !compactWide)) ...[
                 LayoutBuilder(
@@ -1138,7 +1178,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                 : MainAxisAlignment.start,
                             children: [
                               const Text(
-                                'Phone',
+                                'Customer Support',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -1152,8 +1192,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.88),
+                                    color: Colors.white.withValues(alpha: 0.88),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -1199,7 +1238,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
               ],
               Text(
                 'Branches Address',
@@ -1213,8 +1252,9 @@ class _MenuScreenState extends State<MenuScreen> {
               if (branches.isEmpty)
                 Text(
                   'Addresses coming soon',
-                  textAlign:
-                      wide && !compactWide ? TextAlign.start : TextAlign.center,
+                  textAlign: wide && !compactWide
+                      ? TextAlign.start
+                      : TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.65),
                     fontSize: 13.5,
@@ -1222,49 +1262,10 @@ class _MenuScreenState extends State<MenuScreen> {
                 )
               else
                 for (final b in branches)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Column(
-                      crossAxisAlignment: wide && !compactWide
-                          ? CrossAxisAlignment.start
-                          : CrossAxisAlignment.center,
-                      children: [
-                        if ((b['name'] ?? '').toString().trim().isNotEmpty)
-                          Text(
-                            b['name'].toString().trim(),
-                            textAlign: wide && !compactWide
-                                ? TextAlign.start
-                                : TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        if ((b['address'] ??
-                                b['address_line'] ??
-                                b['location'] ??
-                                '')
-                            .toString()
-                            .trim()
-                            .isNotEmpty)
-                          Text(
-                            (b['address'] ??
-                                    b['address_line'] ??
-                                    b['location'])
-                                .toString()
-                                .trim(),
-                            textAlign: wide && !compactWide
-                                ? TextAlign.start
-                                : TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.82),
-                              fontSize: 13.5,
-                              height: 1.4,
-                            ),
-                          ),
-                      ],
-                    ),
+                  _FooterBranchItem(
+                    b: b,
+                    wide: wide,
+                    compactWide: compactWide,
                   ),
               const SizedBox(height: 18),
               if (!wide) footerLinks(center: true),
@@ -1497,250 +1498,259 @@ class _MenuScreenState extends State<MenuScreen> {
           stream: FirebaseAuth.instance.authStateChanges(),
           initialData: FirebaseAuth.instance.currentUser,
           builder: (context, authSnap) {
-            final isLoggedIn = authSnap.data != null ||
+            final isLoggedIn =
+                authSnap.data != null ||
                 FirebaseAuth.instance.currentUser != null;
             return LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    children: [
-                      // Drawer Header
-                      Container(
-                        width: double.infinity,
-                        color: AppColors.matteBlack,
-                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const BrandImage(
-                              assetPath: 'assets/zanfu_logo.png',
-                              height: 100,
-                            ),
-                            if (isLoggedIn) ...[
-                              const SizedBox(height: 8),
-                              ListenableBuilder(
-                                listenable: _userProfileController,
-                                builder: (context, _) {
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        _userProfileController.userName,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        _userProfileController.userPhone,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 14),
-                              FlameGradientButton(
-                                label: 'VIEW PROFILE',
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  AppNavigation.openProfile(context);
-                                },
-                              ),
-                            ] else ...[
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Guest',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'To experience more features, please sign in with Google.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  height: 1.35,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    _showLoginDialog();
-                                  },
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 11,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.cardBackground,
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                        color: AppColors.primary
-                                            .withValues(alpha: 0.45),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const BrandImage(
-                                          assetPath: 'assets/google_g_logo.png',
-                                          width: 18,
-                                          height: 18,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        const Text(
-                                          'Sign in with Google',
-                                          style: TextStyle(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (isLoggedIn) ...[
-                        _drawerItem(
-                          Icons.inventory_2_outlined,
-                          "Order History",
-                          onTap: () {
-                            Navigator.pop(context);
-                            AppNavigation.openOrders(context);
-                          },
-                        ),
-                        const Divider(
-                          height: 1,
-                          color: AppColors.divider,
-                          indent: 16,
-                          endIndent: 16,
-                        ),
-                      ],
-                      if (isLoggedIn) ...[
-                        const Divider(
-                          height: 1,
-                          color: AppColors.divider,
-                          indent: 16,
-                          endIndent: 16,
-                        ),
-                        _drawerItem(
-                          Icons.logout_rounded,
-                          "Logout",
-                          showArrow: false,
-                          onTap: () {
-                            Navigator.pop(context);
-                            _showLogoutDialog();
-                          },
-                        ),
-                      ],
-                      const Spacer(),
-                      // Bottom contact us + footer
-                      Column(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
                         children: [
-                          FlameGradientButton(
-                            label: 'CONTACT US',
-                            height: 50,
-                            borderRadius: 10,
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            onTap: () async {
-                              Navigator.pop(context);
-                              final ok =
-                                  await _appConfig.dialCustomerSupport();
-                              if (!ok && mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Customer support number not available',
+                          // Drawer Header
+                          Container(
+                            width: double.infinity,
+                            color: AppColors.matteBlack,
+                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const BrandImage(
+                                  assetPath: 'assets/zanfu_logo.png',
+                                  height: 100,
+                                ),
+                                if (isLoggedIn) ...[
+                                  const SizedBox(height: 8),
+                                  ListenableBuilder(
+                                    listenable: _userProfileController,
+                                    builder: (context, _) {
+                                      return Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            _userProfileController.userName,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _userProfileController.userPhone,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: AppColors.textSecondary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 14),
+                                  FlameGradientButton(
+                                    label: 'VIEW PROFILE',
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      AppNavigation.openProfile(context);
+                                    },
+                                  ),
+                                ] else ...[
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Guest',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
                                   ),
-                                );
-                              }
-                            },
-                            trailing: Container(
-                              padding: const EdgeInsets.all(5),
-                              decoration: const BoxDecoration(
-                                color: AppColors.matteBlack,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.phone_rounded,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    AppNavigation.openTermsConditions(context);
-                                  },
-                                  child: Text(
-                                    "Terms & Conditions",
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'To experience more features, please sign in with Google.',
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.primary,
+                                      fontSize: 12.5,
+                                      height: 1.35,
+                                      color: AppColors.textSecondary,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 16),
-                                Text(
-                                  "V-3.0.6-U",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
+                                  const SizedBox(height: 12),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        _showLoginDialog();
+                                      },
+                                      borderRadius: BorderRadius.circular(24),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 11,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.cardBackground,
+                                          borderRadius: BorderRadius.circular(
+                                            24,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.45,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const BrandImage(
+                                              assetPath:
+                                                  'assets/google_g_logo.png',
+                                              width: 18,
+                                              height: 18,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Text(
+                                              'Sign in with Google',
+                                              style: TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ),
+                          if (isLoggedIn) ...[
+                            _drawerItem(
+                              Icons.inventory_2_outlined,
+                              "Order History",
+                              onTap: () {
+                                Navigator.pop(context);
+                                AppNavigation.openOrders(context);
+                              },
+                            ),
+                            const Divider(
+                              height: 1,
+                              color: AppColors.divider,
+                              indent: 16,
+                              endIndent: 16,
+                            ),
+                          ],
+                          if (isLoggedIn) ...[
+                            const Divider(
+                              height: 1,
+                              color: AppColors.divider,
+                              indent: 16,
+                              endIndent: 16,
+                            ),
+                            _drawerItem(
+                              Icons.logout_rounded,
+                              "Logout",
+                              showArrow: false,
+                              onTap: () {
+                                Navigator.pop(context);
+                                _showLogoutDialog();
+                              },
+                            ),
+                          ],
+                          const Spacer(),
+                          // Bottom contact us + footer
+                          Column(
+                            children: [
+                              FlameGradientButton(
+                                label: 'CONTACT US',
+                                height: 50,
+                                borderRadius: 10,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                onTap: () async {
+                                  Navigator.pop(context);
+                                  final ok = await _appConfig
+                                      .dialCustomerSupport();
+                                  if (!ok && mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Customer support number not available',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                trailing: Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.matteBlack,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.phone_rounded,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        AppNavigation.openTermsConditions(
+                                          context,
+                                        );
+                                      },
+                                      child: Text(
+                                        "Terms & Conditions",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Text(
+                                      "V-3.0.6-U",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             );
-          },
-        );
           },
         ),
       ),
@@ -1932,7 +1942,10 @@ class _MenuScreenState extends State<MenuScreen> {
             onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           TextButton(
@@ -1954,7 +1967,7 @@ class _MenuScreenState extends State<MenuScreen> {
     await GoogleAuthHelper.signOut();
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MenuScreen(showLoginOnStart: true)),
+        MaterialPageRoute(builder: (_) => const MenuScreen()),
         (route) => false,
       );
     }
@@ -2085,13 +2098,20 @@ class _HomeCategoryTabsBar extends StatefulWidget {
   State<_HomeCategoryTabsBar> createState() => _HomeCategoryTabsBarState();
 }
 
-class _HomeCategoryTabsBarState extends State<_HomeCategoryTabsBar> {
+class _HomeCategoryTabsBarState extends State<_HomeCategoryTabsBar>
+    with WidgetsBindingObserver {
   final GlobalKey _contentKey = GlobalKey();
   late List<GlobalKey> _tabKeys;
-  final ValueNotifier<({double left, double width})> _pill =
-      ValueNotifier((left: 0.0, width: 0.0));
-  final ValueNotifier<({bool left, bool right})> _overflow =
-      ValueNotifier((left: false, right: false));
+  final ValueNotifier<({double left, double width})> _pill = ValueNotifier((
+    left: 0.0,
+    width: 0.0,
+  ));
+  final ValueNotifier<({bool left, bool right})> _overflow = ValueNotifier((
+    left: false,
+    right: false,
+  ));
+  final ValueNotifier<bool> _isStretching = ValueNotifier(false);
+  Timer? _stretchTimer;
 
   double get _gap => ResponsiveHelper.categoryTabGap(context);
   double get _pillHeight => ResponsiveHelper.categoryTabPillHeight(context);
@@ -2101,6 +2121,7 @@ class _HomeCategoryTabsBarState extends State<_HomeCategoryTabsBar> {
     super.initState();
     _tabKeys = List.generate(widget.categories.length, (_) => GlobalKey());
     widget.scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateOverflow();
       _updatePill();
@@ -2123,13 +2144,27 @@ class _HomeCategoryTabsBarState extends State<_HomeCategoryTabsBar> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.scrollController.removeListener(_onScroll);
     _pill.dispose();
     _overflow.dispose();
+    _isStretching.dispose();
+    _stretchTimer?.cancel();
     super.dispose();
   }
 
   void _onScroll() => _updateOverflow();
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _updateOverflow();
+        _updatePill();
+      }
+    });
+  }
 
   void _updateOverflow() {
     if (!widget.scrollController.hasClients) return;
@@ -2189,7 +2224,19 @@ class _HomeCategoryTabsBarState extends State<_HomeCategoryTabsBar> {
     final nextWidth = tabBox.size.width;
     final cur = _pill.value;
     if (nextLeft == cur.left && nextWidth == cur.width) return;
+
+    final isInitialLoad = cur.width <= 0;
+
     _pill.value = (left: nextLeft, width: nextWidth);
+    
+    if (!isInitialLoad) {
+      // Stretch effect only when moving
+      _isStretching.value = true;
+      _stretchTimer?.cancel();
+      _stretchTimer = Timer(const Duration(milliseconds: 320), () {
+        if (mounted) _isStretching.value = false;
+      });
+    }
   }
 
   void _scrollBy(double delta) {
@@ -2209,24 +2256,53 @@ class _HomeCategoryTabsBarState extends State<_HomeCategoryTabsBar> {
     final small = ResponsiveHelper.isSmallMobile(context);
     final size = small ? 24.0 : 30.0;
     return Positioned(
-      left: left ? 6 : null,
-      right: left ? null : 6,
+      left: left ? 0 : null,
+      right: left ? null : 0,
       top: 0,
       bottom: 0,
-      child: Center(
-        child: GestureDetector(
-          onTap: () => _scrollBy(left ? -360 : 360),
-          child: Container(
-            width: size,
-            height: size,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
+      width: 50,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(left ? 0.95 : 0.0),
+                  AppColors.primary.withOpacity(left ? 0.0 : 0.95),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
             ),
-            child: Icon(
-              left ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-              color: AppColors.matteBlack,
-              size: small ? 18 : 22,
+            child: Center(
+              child: GestureDetector(
+                onTap: () => _scrollBy(left ? -360 : 360),
+                child: Container(
+                  width: size,
+                  height: size,
+                  margin: EdgeInsets.only(
+                    left: left ? 6 : 0,
+                    right: left ? 0 : 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    left ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    color: AppColors.primary,
+                    size: small ? 18 : 22,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -2236,88 +2312,145 @@ class _HomeCategoryTabsBarState extends State<_HomeCategoryTabsBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.primary,
-      child: SizedBox(
-        height: widget.height,
-        width: double.infinity,
-        child: ValueListenableBuilder<({bool left, bool right})>(
-          valueListenable: _overflow,
-          builder: (context, overflow, _) {
-            return Stack(
-              children: [
-                ListView(
-                  controller: widget.scrollController,
-                  scrollDirection: Axis.horizontal,
-                  primary: false,
-                  physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: overflow.left || overflow.right
-                        ? 36
-                        : ResponsiveHelper.categoryTabBarPadding(context),
-                  ),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Material(
+          color: AppColors.primary.withOpacity(0.85),
+          child: SizedBox(
+            height: widget.height,
+            width: double.infinity,
+            child: ValueListenableBuilder<({bool left, bool right})>(
+              valueListenable: _overflow,
+              builder: (context, overflow, _) {
+                return Stack(
                   children: [
-                    SizedBox(
-                      height: widget.height,
-                      child: Stack(
-                        key: _contentKey,
-                        alignment: Alignment.centerLeft,
-                        children: [
-                          ValueListenableBuilder<({double left, double width})>(
-                            valueListenable: _pill,
-                            builder: (context, pill, _) {
-                              if (pill.width <= 0) {
-                                return const SizedBox.shrink();
-                              }
-                              return Positioned(
-                                left: pill.left,
-                                top: (widget.height - _pillHeight) / 2,
-                                width: pill.width,
-                                height: _pillHeight,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          Row(
+                    ListView(
+                      controller: widget.scrollController,
+                      scrollDirection: Axis.horizontal,
+                      primary: false,
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        left: overflow.left
+                            ? 36
+                            : ResponsiveHelper.categoryTabBarPadding(context),
+                        right: overflow.right
+                            ? 36
+                            : ResponsiveHelper.categoryTabBarPadding(context),
+                      ),
+                      children: [
+                        SizedBox(
+                          height: widget.height,
+                          child: Stack(
+                            key: _contentKey,
+                            alignment: Alignment.centerLeft,
                             children: [
-                              for (int index = 0;
-                                  index < widget.categories.length;
-                                  index++) ...[
-                                if (index > 0) SizedBox(width: _gap),
-                                Builder(
-                                  builder: (context) {
-                                    final category = widget.categories[index];
-                                    final selected =
-                                        category == widget.selected;
-                                    return _CategoryTabChip(
-                                      measureKey: _tabKeys[index],
-                                      label: category,
-                                      selected: selected,
-                                      height: widget.height,
-                                      pillHeight: _pillHeight,
-                                      fontSize: widget.fontSize,
-                                      onTap: () => widget.onSelect(category),
-                                    );
-                                  },
-                                ),
-                              ],
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _isStretching,
+                                builder: (context, isStretching, _) {
+                                  return ValueListenableBuilder<
+                                    ({double left, double width})
+                                  >(
+                                    valueListenable: _pill,
+                                    builder: (context, pill, _) {
+                                      if (pill.width <= 0) {
+                                        return const SizedBox.shrink();
+                                      }
+
+                                      // Apply stretch morph logic
+                                      final double w = isStretching
+                                          ? pill.width + 16
+                                          : pill.width;
+                                      final double l = isStretching
+                                          ? pill.left - 8
+                                          : pill.left;
+                                      final double h = isStretching
+                                          ? _pillHeight + 4
+                                          : _pillHeight;
+                                      final double t = (widget.height - h) / 2;
+
+                                      return AnimatedPositioned(
+                                        duration: Duration(
+                                          milliseconds: isStretching
+                                              ? 300
+                                              : 250,
+                                        ),
+                                        curve: isStretching
+                                            ? Curves.easeInOutCubic
+                                            : Curves.easeOutBack,
+                                        left: l,
+                                        top: t,
+                                        width: w,
+                                        height: h,
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            50,
+                                          ),
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.cardBackground,
+                                            borderRadius: BorderRadius.circular(50),
+                                            border: Border.all(
+                                              color: Colors.white.withOpacity(0.2),
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.3),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                              Row(
+                                children: [
+                                  for (
+                                    int index = 0;
+                                    index < widget.categories.length;
+                                    index++
+                                  ) ...[
+                                    if (index > 0) SizedBox(width: _gap),
+                                    Builder(
+                                      builder: (context) {
+                                        final category =
+                                            widget.categories[index];
+                                        final selected =
+                                            category == widget.selected;
+                                        return _CategoryTabChip(
+                                          measureKey: _tabKeys[index],
+                                          label: category,
+                                          selected: selected,
+                                          height: widget.height,
+                                          pillHeight: _pillHeight,
+                                          fontSize: widget.fontSize,
+                                          onTap: () =>
+                                              widget.onSelect(category),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                    if (!ResponsiveHelper.isMobile(context)) ...[
+                      if (overflow.left) _arrow(left: true),
+                      if (overflow.right) _arrow(left: false),
+                    ],
                   ],
-                ),
-                if (overflow.left) _arrow(left: true),
-                if (overflow.right) _arrow(left: false),
-              ],
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -2409,13 +2542,34 @@ class _CategoryTabChip extends StatelessWidget {
                 horizontal: ResponsiveHelper.isMobile(context) ? 10 : 14,
               ),
               alignment: Alignment.center,
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  color: AppColors.matteBlack,
-                ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: 0.0,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: GoogleFonts.outfit().fontFamily,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                      color: selected ? Colors.white : AppColors.matteBlack,
+                      fontFamily: GoogleFonts.outfit().fontFamily,
+                      height: 1.0,
+                    ),
+                    child: Text(label),
+                  ),
+                ],
               ),
             ),
           ),
@@ -2465,6 +2619,142 @@ class _FooterLinkState extends State<_FooterLink> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _FooterBranchItem extends StatefulWidget {
+  final Map<String, dynamic> b;
+  final bool wide;
+  final bool compactWide;
+
+  const _FooterBranchItem({
+    super.key,
+    required this.b,
+    required this.wide,
+    required this.compactWide,
+  });
+
+  @override
+  State<_FooterBranchItem> createState() => _FooterBranchItemState();
+}
+
+class _FooterBranchItemState extends State<_FooterBranchItem> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = widget.b;
+    final wide = widget.wide;
+    final compactWide = widget.compactWide;
+
+    final name = (b['name'] ?? '').toString().trim();
+    final address = (b['address'] ?? b['address_line'] ?? b['location'] ?? '')
+        .toString()
+        .trim();
+    final phone =
+        (b['phone'] ?? b['contact'] ?? b['number'] ?? '').toString().trim();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: wide && !compactWide
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
+        children: [
+          if (name.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: wide && !compactWide
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      name,
+                      textAlign: wide && !compactWide
+                          ? TextAlign.start
+                          : TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: _isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: wide && !compactWide ? Alignment.topLeft : Alignment.topCenter,
+            child: _isExpanded
+                ? Column(
+                    crossAxisAlignment: wide && !compactWide
+                        ? CrossAxisAlignment.start
+                        : CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 4),
+                      if (address.isNotEmpty)
+                        Text(
+                          address,
+                          textAlign: wide && !compactWide
+                              ? TextAlign.start
+                              : TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.82),
+                            fontSize: 13.5,
+                            height: 1.4,
+                          ),
+                        ),
+                      if (phone.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            phone,
+                            textAlign: wide && !compactWide
+                                ? TextAlign.start
+                                : TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.82),
+                              fontSize: 13.5,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }

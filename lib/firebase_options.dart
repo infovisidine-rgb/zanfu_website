@@ -11,7 +11,7 @@ class DefaultFirebaseOptions {
     appId: '1:826969945589:web:7296832e04b5f5fae11cbc',
     messagingSenderId: '826969945589',
     projectId: 'visidine-c7d2d',
-    authDomain: 'visidine-c7d2d.firebaseapp.com',
+    authDomain: 'auth.zanfupk.com',
     storageBucket: 'visidine-c7d2d.firebasestorage.app',
     measurementId: 'G-86807JNHLG',
   );

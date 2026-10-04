@@ -1,25 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <base href="/">
 
+  <!-- ===== Core ===== -->
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="VisiDine — see your food on the table before you order.">
-  <meta name="google-signin-client_id" content="826969945589-kqdfopmvug8iah0mq8u8iqfe9hdu1rlp.apps.googleusercontent.com">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+  <!-- ===== SEO Meta Tags ===== -->
+  <title>Zanfu | Fast Food Restaurant</title>
+  <meta name="description" content="Fast Food Restaurant in Rawalpindi &amp; Islamabad">
+  <meta name="keywords" content="zanfu, zanfu restaurant, fast food rawalpindi, fast food islamabad, fast food rwp, zanfu rwp, zanfu islamabad, online food order rawalpindi, best burger islamabad, food deals rwp, VisiDine, visidine zanfu, restaurant islamabad, restaurant rawalpindi">
+  <meta name="author" content="Zanfu">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://zanfupk.com/">
+
+  <!-- ===== Open Graph (Social Sharing) ===== -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://zanfupk.com/">
+  <meta property="og:title" content="Zanfu | Fast Food Restaurant">
+  <meta property="og:description" content="Fast Food Restaurant in Rawalpindi &amp; Islamabad">
+  <meta property="og:image" content="https://zanfupk.com/brand/zanfusearchscreenlogo.png">
+  <meta property="og:image:width" content="562">
+  <meta property="og:image:height" content="444">
+  <meta property="og:site_name" content="Zanfu">
+  <meta property="og:locale" content="en_PK">
+
+  <!-- ===== Twitter Card ===== -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Zanfu | Fast Food Restaurant">
+  <meta name="twitter:description" content="Fast Food Restaurant in Rawalpindi &amp; Islamabad">
+  <meta name="twitter:image" content="https://zanfupk.com/brand/zanfusearchscreenlogo.png">
+
+  <!-- ===== JSON-LD Structured Data (Google Rich Results) ===== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    "name": "Zanfu",
+    "alternateName": "Zanfu Restaurant",
+    "url": "https://zanfupk.com",
+    "logo": "https://zanfupk.com/brand/zanfusearchscreenlogo.png",
+    "image": "https://zanfupk.com/brand/zanfusearchscreenlogo.png",
+    "description": "Fast Food Restaurant in Rawalpindi & Islamabad. Online order, burgers, deals, BBQ.",
+    "servesCuisine": ["Fast Food", "Burgers", "BBQ", "Pakistani"],
+    "priceRange": "$$",
+    "telephone": "",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Rawalpindi",
+      "addressRegion": "Punjab",
+      "addressCountry": "PK"
+    },
+    "areaServed": ["Rawalpindi", "Islamabad"],
+    "sameAs": [
+      "https://zanfupk.com"
+    ],
+    "hasMenu": "https://zanfupk.com",
+    "potentialAction": {
+      "@type": "OrderAction",
+      "target": "https://zanfupk.com"
+    }
+  }
+  </script>
+
+  <!-- ===== PWA & Icons ===== -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="VisiDine">
+  <meta name="apple-mobile-web-app-title" content="Zanfu">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>VisiDine</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="manifest" href="manifest.json">
 
+  <!-- ===== Google Sign-In ===== -->
+  <meta name="google-signin-client_id"
+    content="826969945589-kqdfopmvug8iah0mq8u8iqfe9hdu1rlp.apps.googleusercontent.com">
+
   <style>
-    html, body {
+    html,
+    body {
       overscroll-behavior-y: none !important;
       overscroll-behavior-x: none !important;
       overscroll-behavior: none !important;
@@ -31,9 +93,54 @@
 
   <script type="module" src="./assets/packages/model_viewer_plus/assets/model-viewer.min.js" defer></script>
 </head>
+
 <body>
-  <div id="vd-boot" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#111;color:#fff;font-family:sans-serif;font-size:16px;">
-    Loading VisiDine…
+  <div id="vd-boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#111;color:#fff;font-family:sans-serif;">
+    <style>
+      @keyframes elasticScale {
+        0% { transform: scale(0); opacity: 0; }
+        60% { transform: scale(1.05); opacity: 1; }
+        80% { transform: scale(0.98); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      .zanfu-logo {
+        width: 260px;
+        animation: elasticScale 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+      .brand-text-container {
+        position: absolute;
+        bottom: 40px;
+        display: flex;
+        gap: 1.6px;
+      }
+      .brand-letter {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 1.6px;
+        opacity: 0;
+        transform: translateX(-15px);
+        animation: cascadeIn 0.6s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+      }
+      .brand-white { color: #ffffff; }
+      .brand-orange { color: #F97316; }
+
+      @keyframes cascadeIn {
+        to { opacity: 1; transform: translateX(0); }
+      }
+    </style>
+    
+    <img class="zanfu-logo" src="assets/assets/zanfu_logo.png" alt="Zanfu Logo" onerror="this.src='favicon.png'" />
+
+    <div class="brand-text-container">
+      <span class="brand-letter brand-white" style="animation-delay: 1.00s">V</span>
+      <span class="brand-letter brand-white" style="animation-delay: 1.05s">I</span>
+      <span class="brand-letter brand-white" style="animation-delay: 1.10s">S</span>
+      <span class="brand-letter brand-white" style="animation-delay: 1.15s">I</span>
+      <span class="brand-letter brand-orange" style="animation-delay: 1.20s">D</span>
+      <span class="brand-letter brand-orange" style="animation-delay: 1.25s">I</span>
+      <span class="brand-letter brand-orange" style="animation-delay: 1.30s">N</span>
+      <span class="brand-letter brand-orange" style="animation-delay: 1.35s">E</span>
+    </div>
   </div>
   <script>
     function removeBootScreen() {
@@ -41,8 +148,6 @@
       if (el) el.remove();
     }
     window.addEventListener('flutter-first-frame', removeBootScreen);
-    // Fallback: hide loading screen after 4s max in case event is missed
-    setTimeout(removeBootScreen, 4000);
 
     // Old release builds left a broken service worker that 404s
     // AssetManifest.bin.json and hides every icon/logo.
@@ -50,12 +155,12 @@
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (regs) {
           regs.forEach(function (r) { r.unregister(); });
-        }).catch(function () {});
+        }).catch(function () { });
       }
       if (window.caches && caches.keys) {
         caches.keys().then(function (keys) {
           keys.forEach(function (k) { caches.delete(k); });
-        }).catch(function () {});
+        }).catch(function () { });
       }
     }
 
@@ -139,4 +244,5 @@
     };
   </script>
 </body>
+
 </html>

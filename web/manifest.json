@@ -1,11 +1,11 @@
 {
-    "name": "VisiDine",
-    "short_name": "VisiDine",
+    "name": "Zanfu | Fast Food Rawalpindi",
+    "short_name": "Zanfu",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0D0D0D",
     "theme_color": "#0D0D0D",
-    "description": "VisiDine — see your food on the table before you order.",
+    "description": "Zanfu — Rawalpindi & Islamabad ka best fast food restaurant. Online order, deals, burgers, BBQ.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

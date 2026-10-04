@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../screens/cart_screen.dart';
 import '../screens/faqs_screen.dart';
 import '../screens/my_orders_screen.dart';
@@ -73,10 +74,7 @@ class AppNavigation {
       return;
     }
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const CartScreen()),
-      (route) => route.isFirst,
-    );
+    context.push('/cart');
   }
 
   static void openProfile(BuildContext context) {
@@ -91,9 +89,7 @@ class AppNavigation {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-    );
+    context.push('/profile');
   }
 
   static void openOrders(
@@ -111,45 +107,29 @@ class AppNavigation {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const MyOrdersScreen()),
-    );
+    context.push('/orders');
   }
 
   static void openExploreMenu(
     BuildContext context, {
     bool showBackButton = true,
   }) {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => ViewAllScreen(showBackButton: showBackButton),
-      ),
-      (route) => route.isFirst,
-    );
+    context.push('/explore', extra: showBackButton);
   }
 
   static void openSearch(BuildContext context) {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SearchScreen()),
-      (route) => route.isFirst,
-    );
+    context.push('/search');
   }
 
   static void openPrivacyPolicy(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
-    );
+    context.push('/privacy-policy');
   }
 
   static void openFaqs(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const FaqsScreen()),
-    );
+    context.push('/faqs');
   }
 
   static void openTermsConditions(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const TermsConditionsScreen()),
-    );
+    context.push('/terms-conditions');
   }
 }

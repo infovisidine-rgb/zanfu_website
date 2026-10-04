@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../utils/web_back_helper.dart';
 import 'package:flutter/services.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_navigation.dart';
@@ -61,7 +63,14 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
-      leading: null,
+      leading: showBackButton
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              onPressed: onBackTap ?? () {
+                safeBack(context);
+              },
+            )
+          : null,
       title: subtitle.trim().isNotEmpty
           ? Column(
               mainAxisSize: MainAxisSize.min,

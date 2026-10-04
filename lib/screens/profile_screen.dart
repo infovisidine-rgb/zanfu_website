@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../utils/web_back_helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/custom_header.dart';
 import '../utils/app_colors.dart';
@@ -151,7 +153,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           subtitle: "",
           showCartIcon: false,
           onBackTap: widget.asSidePanel
-              ? () => Navigator.of(context).maybePop()
+              ? () {
+                  Navigator.of(context).maybePop();
+                }
               : null,
         ),
         body: _isLoading

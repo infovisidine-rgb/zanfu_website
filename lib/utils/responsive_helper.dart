@@ -98,12 +98,12 @@ class ResponsiveHelper {
 
   static double headerLogoHeight(BuildContext context) {
     final w = screenWidth(context);
-    if (w < 390) return 32;
-    if (w < 400) return 42;
-    if (w < 600) return 48;
-    if (w < 900) return 52;
-    if (w < 1200) return 56;
-    return 60;
+    if (w < 390) return 44;
+    if (w < 400) return 50;
+    if (w < 600) return 56;
+    if (w < 900) return 68;
+    if (w < 1200) return 76;
+    return 84;
   }
 
   static double headerIconCircle(BuildContext context) {
@@ -119,10 +119,10 @@ class ResponsiveHelper {
   }
 
   static double categoryTabFontSize(BuildContext context) {
-    if (isSmallMobile(context)) return 12.5;
-    if (isMobile(context)) return 14.5;
-    if (isTablet(context)) return 16;
-    return 16.5;
+    if (isSmallMobile(context)) return 14;
+    if (isMobile(context)) return 16.5;
+    if (isTablet(context)) return 18;
+    return 19;
   }
 
   static double categoryTitleFontSize(BuildContext context) {
@@ -136,9 +136,9 @@ class ResponsiveHelper {
   static double bannerAspectRatio(BuildContext context) => 3.5;
 
   static double stickyCategoryTabsHeight(BuildContext context) {
-    if (isSmallMobile(context)) return 48;
-    if (isMobile(context)) return 58;
-    return 66;
+    if (isSmallMobile(context)) return 40;
+    if (isMobile(context)) return 48;
+    return 52;
   }
 
   static double categoryTabGap(BuildContext context) {
@@ -148,9 +148,9 @@ class ResponsiveHelper {
   }
 
   static double categoryTabPillHeight(BuildContext context) {
-    if (isSmallMobile(context)) return 28;
-    if (isMobile(context)) return 34;
-    return 36;
+    if (isSmallMobile(context)) return 32;
+    if (isMobile(context)) return 38;
+    return 40;
   }
 
   static double categoryTabBarPadding(BuildContext context) {

@@ -47,7 +47,7 @@ class _ARScreenState extends State<ARScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          foregroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
           title: const Text(''),
         ),
         body: src == null
@@ -61,12 +61,23 @@ class _ARScreenState extends State<ARScreen> {
                   ),
                 ),
               )
-            : Stack(
-                fit: StackFit.expand,
+            : Column(
                 children: [
-                  // Viewer stays in DOM for activateAR / Quick Look.
-                  Opacity(
-                    opacity: 0.01,
+                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Tap the Visidine button in the corner to open camera.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
                     child: ModelViewer(
                       id: _viewerId,
                       src: src,
@@ -75,54 +86,40 @@ class _ARScreenState extends State<ARScreen> {
                       arModes: const ['scene-viewer', 'webxr', 'quick-look'],
                       arScale: ArScale.auto,
                       arPlacement: ArPlacement.floor,
-                      autoRotate: false,
-                      cameraControls: false,
+                      autoRotate: true,
+                      cameraControls: true,
+                      minCameraOrbit: 'auto 0deg auto',
+                      maxCameraOrbit: 'auto 90deg auto',
                       backgroundColor: Colors.transparent,
                       loading: Loading.eager,
-                      relatedJs: '''
-(function () {
-  function tryActivate(mv) {
-    if (!mv || typeof mv.activateAR !== 'function') return;
-    try { mv.activateAR(); } catch (e) {}
-  }
-  function bind() {
-    var mv = document.querySelector('#$_viewerId') ||
-             document.querySelector('model-viewer');
-    if (!mv) return false;
-    if (mv.loaded) {
-      tryActivate(mv);
-    } else {
-      mv.addEventListener('load', function () { tryActivate(mv); }, { once: true });
-    }
-    setTimeout(function () { tryActivate(mv); }, 300);
-    setTimeout(function () { tryActivate(mv); }, 800);
-    setTimeout(function () { tryActivate(mv); }, 1400);
-    return true;
-  }
-  if (!bind()) {
-    var n = 0;
-    var t = setInterval(function () {
-      n++;
-      if (bind() || n > 20) clearInterval(t);
-    }, 150);
-  }
-})();
-''',
+                      innerModelViewerHtml: '''
+                        <button slot="ar-button" id="ar-button">
+                          <img src="assets/assets/visidine_logo.png" onerror="this.onerror=null; this.src='assets/visidine_logo.png';" style="width: 24px; height: 24px; object-fit: contain;">
+                        </button>
+                      ''',
+                      relatedCss: '''
+                        #ar-button {
+                          background-color: #1c1c1e;
+                          border-radius: 50%;
+                          border: none;
+                          position: absolute;
+                          bottom: 24px;
+                          right: 24px;
+                          width: 48px;
+                          height: 48px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                          cursor: pointer;
+                        }
+                        #ar-button:active {
+                          opacity: 0.8;
+                        }
+                      ''',
                     ),
                   ),
-                  const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: AppColors.primary),
-                        SizedBox(height: 16),
-                        Text(
-                          'Opening camera…',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 32),
                 ],
               ),
       ),

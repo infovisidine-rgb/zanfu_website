@@ -5,10 +5,7 @@ import 'dart:html' as html;
 ///
 /// Returns true if navigation was started. iOS / desktop return false so the
 /// caller can fall back to in-page [model-viewer].
-Future<bool> tryLaunchWebArDirect(
-  String modelHttpsUrl, {
-  String? title,
-}) async {
+Future<bool> tryLaunchWebArDirect(String modelHttpsUrl, {String? title}) async {
   final url = modelHttpsUrl.trim();
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return false;
@@ -28,11 +25,7 @@ Future<bool> tryLaunchWebArDirect(
     params['title'] = t;
   }
 
-  final sceneViewer = Uri.https(
-    'arvr.google.com',
-    '/scene-viewer/1.0',
-    params,
-  );
+  final sceneViewer = Uri.https('arvr.google.com', '/scene-viewer/1.0', params);
 
   // Same-tab assign keeps this a user-gesture navigation (reliable for AR).
   html.window.location.assign(sceneViewer.toString());
